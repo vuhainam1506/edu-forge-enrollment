@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Enrollment {
+  id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt   DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt   DateTime         @db.Timestamp(6)
+  courseId    String           @db.VarChar
+  userId      String           @db.VarChar
+  status      EnrollmentStatus @default(ACTIVE)
+  completedAt DateTime?        @db.Timestamp(6)
+  Payment     Payment?
+  Progress    Progress[]
+
+  @@unique([userId, courseId])
+}
+
+model Payment {
+  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt     DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime      @db.Timestamp(6)
+  amount        Float
+  status        PaymentStatus
+  paymentMethod String        @default("QR_CODE") @db.VarChar
+  qrCode        String?
+  qrExpireAt    DateTime      @db.Timestamp(6)
+  enrollmentId  String        @unique @db.Uuid
+  Enrollment    Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Progress {
+  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt      DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime   @db.Timestamp(6)
+  chapterId      String     @db.VarChar
+  lessonId       String     @db.VarChar
+  completed      Boolean    @default(false)
+  completedAt    DateTime?  @db.Timestamp(6)
+  lastAccessedAt DateTime   @default(now()) @db.Timestamp(6)
+  enrollmentId   String     @db.Uuid
+  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId, chapterId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+}
+
+enum PaymentStatus {
+  COMPLETED
+  FAILED
+  EXPIRED
+}

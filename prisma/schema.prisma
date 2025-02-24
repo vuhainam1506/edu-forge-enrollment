@@ -11,52 +11,43 @@ model Enrollment {
   id          String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   createdAt   DateTime         @default(now()) @db.Timestamp(6)
   updatedAt   DateTime         @db.Timestamp(6)
-  courseId    String           @db.VarChar
-  userId      String           @db.VarChar
-  status      EnrollmentStatus @default(ACTIVE)
-  completedAt DateTime?        @db.Timestamp(6)
+  courseId    String          @db.VarChar
+  userId      String          @db.VarChar
+  status      EnrollmentStatus @default(PENDING)
+  completedAt DateTime?       @db.Timestamp(6)
+  isFree      Boolean         @default(false)
   Payment     Payment?
-  Progress    Progress[]
 
   @@unique([userId, courseId])
 }
 
 model Payment {
-  id            String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  createdAt     DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt     DateTime      @db.Timestamp(6)
-  amount        Float
-  status        PaymentStatus
-  paymentMethod String        @default("QR_CODE") @db.VarChar
-  qrCode        String?
-  qrExpireAt    DateTime      @db.Timestamp(6)
-  enrollmentId  String        @unique @db.Uuid
-  Enrollment    Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model Progress {
-  id             String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
-  createdAt      DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime   @db.Timestamp(6)
-  chapterId      String     @db.VarChar
-  lessonId       String     @db.VarChar
-  completed      Boolean    @default(false)
-  completedAt    DateTime?  @db.Timestamp(6)
-  lastAccessedAt DateTime   @default(now()) @db.Timestamp(6)
-  enrollmentId   String     @db.Uuid
-  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-
-  @@unique([enrollmentId, lessonId])
-  @@index([enrollmentId, chapterId])
+  id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  createdAt       DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt       DateTime      @db.Timestamp(6)
+  amount          Float
+  status          PaymentStatus @default(PENDING)
+  
+  // PayOS fields
+  payosOrderId    String?       @unique @db.VarChar
+  payosTransId    String?       @unique @db.VarChar
+  orderCode       String        @unique @db.VarChar
+  
+  enrollmentId    String        @unique @db.Uuid
+  Enrollment      Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 enum EnrollmentStatus {
-  ACTIVE
-  COMPLETED
+  PENDING    // Chờ thanh toán hoặc xác nhận
+  ACTIVE     // Đang học
+  COMPLETED  // Hoàn thành
+  CANCELLED  // Đã hủy
 }
 
 enum PaymentStatus {
+  PENDING
   COMPLETED
   FAILED
+  CANCELLED
   EXPIRED
 }

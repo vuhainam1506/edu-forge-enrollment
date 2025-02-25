@@ -1,16 +1,14 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { EnrollmentController } from './enrollment/enrollment.controller';
-import { EnrollemtnService } from './enrollemtn/enrollemtn.service';
 import { EnrollmentModule } from './enrollment/enrollment.module';
-import { EnrollmentService } from './enrollment/enrollment.service';
-import { PrismaModule } from './prisma/prisma.module';
+import { PrismaClient } from '@prisma/client';
 import { EnrollmentController } from './enrollment/enrollment.controller';
+import { EnrollmentService } from './enrollment/enrollment.service';
 
 @Module({
-  imports: [PrismaModule, EnrollmentModule],
-  controllers: [AppController, EnrollmentController],
-  providers: [AppService, EnrollmentService, EnrollemtnService],
+  imports: [EnrollmentModule],
+  controllers: [EnrollmentController],
+  providers: [EnrollmentService, PrismaClient],
 })
 export class AppModule {}

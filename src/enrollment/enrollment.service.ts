@@ -3,8 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { Enrollment, EnrollmentStatus } from '@prisma/client';
+import { PrismaClient, Enrollment, EnrollmentStatus } from '@prisma/client';
 
 @Injectable()
 export class EnrollmentService {
@@ -91,6 +90,7 @@ export class EnrollmentService {
     });
     return !!enrollment;
   }
+
   async findAll(filters?: {
     userId?: string;
     status?: EnrollmentStatus;

@@ -4,10 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient, Enrollment, EnrollmentStatus } from '@prisma/client';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class EnrollmentService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(
+    private prisma: PrismaClient,
+    private emailService: EmailService,
+  ) {}
 
   // Tạo enrollment mới
   async create(data: {
@@ -16,7 +20,7 @@ export class EnrollmentService {
     isFree?: boolean;
   }): Promise<Enrollment> {
     try {
-      return await this.prisma.enrollment.create({
+      const enrollment = await this.prisma.enrollment.create({
         data: {
           courseId: data.courseId,
           userId: data.userId,
@@ -27,6 +31,11 @@ export class EnrollmentService {
           updatedAt: new Date(),
         },
       });
+
+      // Send enrollment email
+      await this.emailService.sendEnrollmentEmail(data.userId, data.courseId);
+
+      return enrollment;
     } catch (error) {
       if (error.code === 'P2002') {
         throw new ConflictException('User is already enrolled in this course');

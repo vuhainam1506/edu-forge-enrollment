@@ -83,7 +83,7 @@ export class EnrollmentService {
     });
   }
 
-  // Kiểm tra enrollment
+  // Kiểm tra xem user đã đăng ký khóa học chưa
   async checkEnrollment(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: {
@@ -126,8 +126,12 @@ export class EnrollmentService {
       to: 'vuhainam1506@gmail.com', // list of receivers
       from: 'noreply@nestjs.com', // sender address
       subject: 'Đăng ký khóa học thành công', // Subject line
-      text: `Bạn đã đăng ký thành công khóa học ${courseId}`, // plaintext body
-      html: `<b>Bạn đã đăng ký thành công khóa học ${courseId}</b>`, // HTML body content
+      template: 'enrollment',
+      context: {
+        name: "user",
+        courseId: courseId,
+        userId: userId
+      }
     });
   }
 }

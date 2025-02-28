@@ -4,14 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaClient, Enrollment, EnrollmentStatus } from '@prisma/client';
-import { EmailService } from '../email/email.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class EnrollmentService {
-  constructor(
-    private prisma: PrismaClient,
-    private emailService: EmailService,
-  ) {}
+  constructor(private prisma: PrismaClient, private mailerService: MailerService) {}
 
   // Tạo enrollment mới
   async create(data: {
@@ -33,7 +30,7 @@ export class EnrollmentService {
       });
 
       // Send enrollment email
-      await this.emailService.sendEnrollmentEmail(data.userId, data.courseId);
+      await this.sendEnrollmentEmail(data.userId, data.courseId);
 
       return enrollment;
     } catch (error) {
@@ -113,6 +110,24 @@ export class EnrollmentService {
       include: {
         Payment: true,
       },
+    });
+  }
+
+  // Gửi email khi user đăng ký khóa học
+  async sendEnrollmentEmail(userId: string, courseId: string): Promise<void> {
+    // const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    // const course = await this.prisma.course.findUnique({ where: { id: courseId } });
+
+    // if (!user || !course) {
+    //   throw new NotFoundException('User or Course not found');
+    // }
+
+    await this.mailerService.sendMail({
+      to: 'vuhainam1506@gmail.com', // list of receivers
+      from: 'noreply@nestjs.com', // sender address
+      subject: 'Đăng ký khóa học thành công', // Subject line
+      text: `Bạn đã đăng ký thành công khóa học ${courseId}`, // plaintext body
+      html: `<b>Bạn đã đăng ký thành công khóa học ${courseId}</b>`, // HTML body content
     });
   }
 }

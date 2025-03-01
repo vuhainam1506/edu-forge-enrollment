@@ -11,51 +11,41 @@ async function main() {
   // Tạo enrollment miễn phí
   const freeEnrollment1 = await prisma.enrollment.create({
     data: {
-      courseId: 'FREE-COURSE-1',
-      userId: 'USER-1',
+      courseId: 'course-1',
+      userId: 'user-1',
+      courseName: 'JavaScript Fundamentals',
+      userName: 'John Doe',
       isFree: true,
       status: EnrollmentStatus.ACTIVE,
       updatedAt: new Date(),
     },
   });
-
-  console.log('Created free enrollment:', freeEnrollment1);
 
   const freeEnrollment2 = await prisma.enrollment.create({
     data: {
-      courseId: 'FREE-COURSE-2',
-      userId: 'USER-3',
+      courseId: 'course-2',
+      userId: 'user-2',
+      courseName: 'React Basics',
+      userName: 'Jane Smith',
       isFree: true,
       status: EnrollmentStatus.ACTIVE,
       updatedAt: new Date(),
     },
   });
-
-  console.log('Created free enrollment:', freeEnrollment2);
-
-  const freeEnrollment3 = await prisma.enrollment.create({
-    data: {
-      courseId: 'FREE-COURSE-3',
-      userId: 'USER-4',
-      isFree: true,
-      status: EnrollmentStatus.ACTIVE,
-      updatedAt: new Date(),
-    },
-  });
-
-  console.log('Created free enrollment:', freeEnrollment3);
 
   // Tạo enrollment có phí - đã thanh toán
   const paidEnrollment1 = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-1',
-      userId: 'USER-2',
+      courseId: 'course-3',
+      userId: 'user-3',
+      courseName: 'Advanced TypeScript',
+      userName: 'Alice Johnson',
       isFree: false,
       status: EnrollmentStatus.ACTIVE,
       updatedAt: new Date(),
       Payment: {
         create: {
-          amount: 299000,
+          amount: 499000,
           status: PaymentStatus.COMPLETED,
           orderCode: 'ORDER-001',
           updatedAt: new Date(),
@@ -67,42 +57,18 @@ async function main() {
     },
   });
 
-  console.log('Created paid enrollment (completed):', paidEnrollment1);
-
   const paidEnrollment2 = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-3',
-      userId: 'USER-4',
-      isFree: false,
-      status: EnrollmentStatus.ACTIVE,
-      updatedAt: new Date(),
-      Payment: {
-        create: {
-          amount: 199000,
-          status: PaymentStatus.COMPLETED,
-          orderCode: 'ORDER-003',
-          updatedAt: new Date(),
-        },
-      },
-    },
-    include: {
-      Payment: true,
-    },
-  });
-
-  console.log('Created paid enrollment (completed):', paidEnrollment2);
-
-  // Tạo enrollment có phí - đang chờ thanh toán
-  const paidEnrollment3 = await prisma.enrollment.create({
-    data: {
-      courseId: 'PAID-COURSE-2',
-      userId: 'USER-2',
+      courseId: 'course-4',
+      userId: 'user-4',
+      courseName: 'NestJS Masterclass',
+      userName: 'Bob Wilson',
       isFree: false,
       status: EnrollmentStatus.PENDING,
       updatedAt: new Date(),
       Payment: {
         create: {
-          amount: 499000,
+          amount: 699000,
           status: PaymentStatus.PENDING,
           orderCode: 'ORDER-002',
           updatedAt: new Date(),
@@ -114,30 +80,7 @@ async function main() {
     },
   });
 
-  console.log('Created paid enrollment (pending):', paidEnrollment3);
-
-  const paidEnrollment4 = await prisma.enrollment.create({
-    data: {
-      courseId: 'PAID-COURSE-4',
-      userId: 'USER-5',
-      isFree: false,
-      status: EnrollmentStatus.PENDING,
-      updatedAt: new Date(),
-      Payment: {
-        create: {
-          amount: 399000,
-          status: PaymentStatus.PENDING,
-          orderCode: 'ORDER-004',
-          updatedAt: new Date(),
-        },
-      },
-    },
-    include: {
-      Payment: true,
-    },
-  });
-
-  console.log('Created paid enrollment (pending):', paidEnrollment4);
+  console.log('Seed data created successfully');
 }
 
 main()

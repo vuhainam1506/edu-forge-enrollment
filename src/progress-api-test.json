@@ -1,0 +1,69 @@
+{
+    "info": {
+      "_postman_id": "your-postman-id",
+      "name": "Progress Service",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Create Progress",
+        "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/progress",
+            "host": ["{{base_url}}"],
+            "path": ["progress"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n    \"userId\": \"user-1\",\n    \"courseId\": \"course-1\",\n    \"lessonId\": \"lesson-1\",\n    \"isCompleted\": false,\n    \"progress\": 0.0\n}"
+          }
+        }
+      },
+      {
+        "name": "Get Progress",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "{{base_url}}/progress/user-1/course-1",
+            "host": ["{{base_url}}"],
+            "path": ["progress", "user-1", "course-1"]
+          }
+        }
+      },
+      {
+        "name": "Update Progress",
+        "request": {
+          "method": "PUT",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "url": {
+            "raw": "{{base_url}}/progress/user-1/course-1",
+            "host": ["{{base_url}}"],
+            "path": ["progress", "user-1", "course-1"]
+          },
+          "body": {
+            "mode": "raw",
+            "raw": "{\n    \"isCompleted\": true,\n    \"progress\": 100.0\n}"
+          }
+        }
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:3000/api"
+      }
+    ]
+  }

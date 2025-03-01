@@ -6,6 +6,16 @@ import { EnrollmentStatus } from '@prisma/client';
 export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
+  @Post('webhook/new-lesson')
+  async handleNewLesson(
+    @Body() data: { courseId: string; lessonData: any },
+  ) {
+    return this.enrollmentService.updateEnrollmentForNewLesson(
+      data.courseId,
+      data.lessonData,
+    );
+  }
+
   @Post()
   async create(
     @Body() data: { courseId: string; userId: string; isFree?: boolean },

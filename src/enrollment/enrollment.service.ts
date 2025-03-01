@@ -134,4 +134,57 @@ export class EnrollmentService {
       }
     });
   }
+
+  // Thêm method mới để cập nhật enrollment khi có bài học mới
+  async updateEnrollmentForNewLesson(courseId: string, lessonData: any) {
+    // Tìm tất cả enrollment active của khóa học
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        courseId,
+        status: EnrollmentStatus.ACTIVE,
+      },
+    });
+
+    // Cập nhật progress cho mỗi enrollment
+    for (const enrollment of enrollments) {
+      // Tạo progress mới cho bài học mới
+      await this.prisma.userProgress.create({
+        data: {
+          userId: enrollment.userId,
+          courseId: enrollment.courseId,
+          lessonId: lessonData.id,
+          isCompleted: false,
+          progress: 0,
+        },
+      });
+
+      // Gửi email thông báo cho user
+      await this.sendNewLessonNotification(
+        enrollment.userId,
+        enrollment.userName,
+        enrollment.courseName,
+        lessonData,
+      );
+    }
+  }
+
+  // Gửi email thông báo bài học mới
+  private async sendNewLessonNotification(
+    userId: string,
+    userName: string,
+    courseName: string,
+    lessonData: any,
+  ) {
+    await this.mailerService.sendMail({
+      to: 'user@example.com', // Thay bằng email thật từ user service
+      subject: 'Bài học mới đã được thêm vào khóa học của bạn',
+      template: 'new-lesson',
+      context: {
+        name: userName,
+        courseName: courseName,
+        lessonTitle: lessonData.title,
+        lessonDescription: lessonData.description,
+      },
+    });
+  }
 }

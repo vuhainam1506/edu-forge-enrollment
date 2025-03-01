@@ -1,16 +1,77 @@
-// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
 model Enrollment {
   id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   createdAt   DateTime         @default(now()) @db.Timestamp(6)
   updatedAt   DateTime         @db.Timestamp(6)
   courseId    String           @db.VarChar
   userId      String           @db.VarChar
-  courseName  String?         @db.VarChar  // Thêm tên khóa học
-  userName    String?         @db.VarChar  // Thêm tên user
   status      EnrollmentStatus @default(PENDING)
   completedAt DateTime?        @db.Timestamp(6)
   isFree      Boolean          @default(false)
+  courseName  String?          @db.VarChar
+  userName    String?          @db.VarChar
+  Certificate Certificate?
   Payment     Payment?
+  Progress    UserProgress[]
 
   @@unique([userId, courseId])
+}
+
+model UserProgress {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  lessonId     String     @db.Uuid
+  isCompleted  Boolean    @default(false)
+  progress     Float      @default(0.0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  enrollmentId String     @db.Uuid
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+
+  @@unique([enrollmentId, lessonId])
+}
+
+model Payment {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt    DateTime      @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime      @db.Timestamp(6)
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  payosOrderId String?       @unique @db.VarChar
+  payosTransId String?       @unique @db.VarChar
+  orderCode    String        @unique @db.VarChar
+  enrollmentId String        @unique @db.Uuid
+  Enrollment   Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model Certificate {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId   String     @unique @db.Uuid
+  certificateUrl String     @db.VarChar
+  issuedAt       DateTime   @default(now())
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  enrollment     Enrollment @relation(fields: [enrollmentId], references: [id])
+}
+
+enum EnrollmentStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+  EXPIRED
 }

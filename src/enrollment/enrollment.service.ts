@@ -147,14 +147,16 @@ export class EnrollmentService {
 
     // Cập nhật progress cho mỗi enrollment
     for (const enrollment of enrollments) {
-      // Tạo progress mới cho bài học mới
-      await this.prisma.userProgress.create({
+      // Cập nhật progress cho bài học mới
+      await this.prisma.userProgress.updateMany({
+        where: {
+          enrollmentId: enrollment.id,
+        },
         data: {
-          userId: enrollment.userId,
-          courseId: enrollment.courseId,
           lessonId: lessonData.id,
           isCompleted: false,
           progress: 0,
+          updatedAt: new Date(),
         },
       });
 

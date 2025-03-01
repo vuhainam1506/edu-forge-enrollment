@@ -6,30 +6,72 @@ const prisma = new PrismaClient();
 async function main() {
   // Xóa dữ liệu cũ
   await prisma.payment.deleteMany({});
+  await prisma.userProgress.deleteMany({});
+  await prisma.certificate.deleteMany({});
   await prisma.enrollment.deleteMany({});
 
-  // Tạo enrollment miễn phí
+  // Tạo enrollment miễn phí với certificate và progress
   const freeEnrollment1 = await prisma.enrollment.create({
     data: {
       courseId: 'course-1',
       userId: 'user-1',
-      courseName: 'JavaScript Fundamentals',
-      userName: 'John Doe',
+      courseName: 'Lập Trình JavaScript Cơ Bản',
+      userName: 'Nguyễn Văn A',
       isFree: true,
-      status: EnrollmentStatus.ACTIVE,
+      status: EnrollmentStatus.COMPLETED,
+      completedAt: new Date(),
       updatedAt: new Date(),
+      Certificate: {
+        create: {
+          certificateUrl: '/certificates/cert-js-basic.pdf',
+          updatedAt: new Date(),
+        },
+      },
+      Progress: {
+        create: [
+          {
+            lessonId: 'lesson-1',
+            isCompleted: true,
+            progress: 100,
+            updatedAt: new Date(),
+          },
+          {
+            lessonId: 'lesson-2',
+            isCompleted: true,
+            progress: 100,
+            updatedAt: new Date(),
+          },
+        ],
+      },
     },
   });
 
+  // Tạo enrollment miễn phí đang học
   const freeEnrollment2 = await prisma.enrollment.create({
     data: {
       courseId: 'course-2',
       userId: 'user-2',
-      courseName: 'React Basics',
-      userName: 'Jane Smith',
+      // courseName: 'HTML & CSS cho người mới bắt đầu',
+      // userName: 'Trần Thị B',
       isFree: true,
       status: EnrollmentStatus.ACTIVE,
       updatedAt: new Date(),
+      Progress: {
+        create: [
+          {
+            lessonId: 'lesson-1',
+            isCompleted: true,
+            progress: 100,
+            updatedAt: new Date(),
+          },
+          {
+            lessonId: 'lesson-2',
+            isCompleted: false,
+            progress: 30,
+            updatedAt: new Date(),
+          },
+        ],
+      },
     },
   });
 
@@ -38,45 +80,56 @@ async function main() {
     data: {
       courseId: 'course-3',
       userId: 'user-3',
-      courseName: 'Advanced TypeScript',
-      userName: 'Alice Johnson',
+      courseName: 'React.js Advanced',
+      userName: 'Lê Văn C',
       isFree: false,
       status: EnrollmentStatus.ACTIVE,
       updatedAt: new Date(),
       Payment: {
         create: {
-          amount: 499000,
+          amount: 1499000,
           status: PaymentStatus.COMPLETED,
           orderCode: 'ORDER-001',
           updatedAt: new Date(),
         },
       },
-    },
-    include: {
-      Payment: true,
+      Progress: {
+        create: [
+          {
+            lessonId: 'lesson-1',
+            isCompleted: true,
+            progress: 100,
+            updatedAt: new Date(),
+          },
+          {
+            lessonId: 'lesson-2',
+            isCompleted: false,
+            progress: 50,
+            updatedAt: new Date(),
+          },
+        ],
+      },
     },
   });
 
+  // Tạo enrollment có phí - chờ thanh toán
   const paidEnrollment2 = await prisma.enrollment.create({
     data: {
       courseId: 'course-4',
       userId: 'user-4',
       courseName: 'NestJS Masterclass',
-      userName: 'Bob Wilson',
+      userName: 'Phạm Thị D',
       isFree: false,
       status: EnrollmentStatus.PENDING,
       updatedAt: new Date(),
       Payment: {
         create: {
-          amount: 699000,
+          amount: 1999000,
           status: PaymentStatus.PENDING,
           orderCode: 'ORDER-002',
           updatedAt: new Date(),
         },
       },
-    },
-    include: {
-      Payment: true,
     },
   });
 

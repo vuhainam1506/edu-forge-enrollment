@@ -7,58 +7,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Certificate {
+  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollmentId   String     @db.Uuid
+  certificateUrl String     @db.VarChar(255)
+  issuedAt       DateTime   @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime   @default(now()) @db.Timestamp(6)
+  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([enrollmentId], map: "certificates_enrollmentId_idx")
+}
+
 model Enrollment {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  createdAt   DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt   DateTime         @db.Timestamp(6)
-  courseId    String           @db.VarChar
-  userId      String           @db.VarChar
-  status      EnrollmentStatus @default(PENDING)
-  completedAt DateTime?        @db.Timestamp(6)
-  isFree      Boolean          @default(false)
-  courseName  String?          @db.VarChar
-  userName    String?          @db.VarChar
-  Certificate Certificate?
-  Payment     Payment?
-  Progress    UserProgress[]
+  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String           @db.VarChar(255)
+  courseId     String           @db.VarChar(255)
+  courseName   String?          @db.VarChar(255)
+  userName     String?          @db.VarChar(255)
+  status       EnrollmentStatus @default(PENDING)
+  isFree       Boolean          @default(false)
+  paymentId    String?          @db.VarChar(255)
+  createdAt    DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt    DateTime         @default(now()) @db.Timestamp(6)
+  completedAt  DateTime?        @db.Timestamp(6)
+  Certificate  Certificate[]
+  UserProgress UserProgress[]
 
   @@unique([userId, courseId])
+  @@index([courseId], map: "enrollments_courseId_idx")
+  @@index([status], map: "enrollments_status_idx")
+  @@index([userId], map: "enrollments_userId_idx")
 }
 
 model UserProgress {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  lessonId     String     @db.Uuid
-  isCompleted  Boolean    @default(false)
-  progress     Float      @default(0.0)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
   enrollmentId String     @db.Uuid
-  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id])
+  lessonId     String     @db.VarChar(255)
+  isCompleted  Boolean    @default(false)
+  progress     Int        @default(0)
+  updatedAt    DateTime   @default(now()) @db.Timestamp(6)
+  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([enrollmentId, lessonId])
-}
-
-model Payment {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  createdAt    DateTime      @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime      @db.Timestamp(6)
-  amount       Float
-  status       PaymentStatus @default(PENDING)
-  payosOrderId String?       @unique @db.VarChar
-  payosTransId String?       @unique @db.VarChar
-  orderCode    String        @unique @db.VarChar
-  enrollmentId String        @unique @db.Uuid
-  Enrollment   Enrollment    @relation(fields: [enrollmentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-}
-
-model Certificate {
-  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollmentId   String     @unique @db.Uuid
-  certificateUrl String     @db.VarChar
-  issuedAt       DateTime   @default(now())
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  enrollment     Enrollment @relation(fields: [enrollmentId], references: [id])
+  @@index([enrollmentId], map: "user_progress_enrollmentId_idx")
+  @@index([lessonId], map: "user_progress_lessonId_idx")
 }
 
 enum EnrollmentStatus {
@@ -66,12 +58,5 @@ enum EnrollmentStatus {
   ACTIVE
   COMPLETED
   CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
   FAILED
-  CANCELLED
-  EXPIRED
 }

@@ -1,69 +1,138 @@
 {
-    "info": {
-      "_postman_id": "your-postman-id",
-      "name": "Progress Service",
-      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  "info": {
+    "name": "Progress Service API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Progress Endpoints",
+      "item": [
+        {
+          "name": "Get Progress for User and Course",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/progress/USER-1/FREE-COURSE-1",
+              "host": ["{{base_url}}"],
+              "path": ["progress", "USER-1", "FREE-COURSE-1"]
+            },
+            "description": "Retrieve progress for a specific user and course"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/progress",
+              "host": ["{{base_url}}"],
+              "path": ["progress"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"enrollmentId\": \"{{enrollment_id}}\",\n    \"lessonId\": \"NEW-LESSON-001\",\n    \"isCompleted\": false,\n    \"progress\": 0\n}"
+            },
+            "description": "Create a new progress record for a lesson"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/progress/USER-1/FREE-COURSE-2",
+              "host": ["{{base_url}}"],
+              "path": ["progress", "USER-1", "FREE-COURSE-2"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"lessonId\": \"LESSON-2-3\",\n    \"isCompleted\": true,\n    \"progress\": 100\n}"
+            },
+            "description": "Update progress for a specific lesson"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Course Completion",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/progress/USER-1/FREE-COURSE-1/check-completion",
+              "host": ["{{base_url}}"],
+              "path": ["progress", "USER-1", "FREE-COURSE-1", "check-completion"]
+            },
+            "description": "Check if a course is completed by a user"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Overall Progress",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/progress/USER-1/FREE-COURSE-2/overall",
+              "host": ["{{base_url}}"],
+              "path": ["progress", "USER-1", "FREE-COURSE-2", "overall"]
+            },
+            "description": "Get overall progress statistics for a course"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003"
     },
-    "item": [
-      {
-        "name": "Create Progress",
-        "request": {
-          "method": "POST",
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json"
-            }
-          ],
-          "url": {
-            "raw": "{{base_url}}/progress",
-            "host": ["{{base_url}}"],
-            "path": ["progress"]
-          },
-          "body": {
-            "mode": "raw",
-            "raw": "{\n    \"userId\": \"user-1\",\n    \"courseId\": \"course-1\",\n    \"lessonId\": \"lesson-1\",\n    \"isCompleted\": false,\n    \"progress\": 0.0\n}"
-          }
-        }
-      },
-      {
-        "name": "Get Progress",
-        "request": {
-          "method": "GET",
-          "header": [],
-          "url": {
-            "raw": "{{base_url}}/progress/user-1/course-1",
-            "host": ["{{base_url}}"],
-            "path": ["progress", "user-1", "course-1"]
-          }
-        }
-      },
-      {
-        "name": "Update Progress",
-        "request": {
-          "method": "PUT",
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json"
-            }
-          ],
-          "url": {
-            "raw": "{{base_url}}/progress/user-1/course-1",
-            "host": ["{{base_url}}"],
-            "path": ["progress", "user-1", "course-1"]
-          },
-          "body": {
-            "mode": "raw",
-            "raw": "{\n    \"isCompleted\": true,\n    \"progress\": 100.0\n}"
-          }
-        }
+    {
+      "key": "enrollment_id",
+      "value": "REPLACE_WITH_ACTUAL_ENROLLMENT_ID"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
       }
-    ],
-    "variable": [
-      {
-        "key": "base_url",
-        "value": "http://localhost:3000/api"
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Status code is 200\", function () {",
+          "    pm.response.to.have.status(200);",
+          "});",
+          "",
+          "pm.test(\"Response time is less than 500ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(500);",
+          "});",
+          "",
+          "pm.test(\"Response has JSON body\", function () {",
+          "    pm.response.to.be.json;",
+          "});"
+        ]
       }
-    ]
-  }
+    }
+  ]
+}

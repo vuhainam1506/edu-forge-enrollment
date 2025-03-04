@@ -8,8 +8,11 @@ import { EnrollmentService } from './enrollment/enrollment.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+
 @Module({
   imports: [
+    ConfigModule.forRoot(),
     EnrollmentModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
@@ -38,6 +41,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       }),
       inject: [ConfigService],
     }),
+    HttpModule,
   ],
   controllers: [EnrollmentController],
   providers: [EnrollmentService, PrismaClient],

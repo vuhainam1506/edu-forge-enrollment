@@ -10,6 +10,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
+import { Resend } from 'resend';
 
 @Injectable()
 export class EnrollmentService {
@@ -70,13 +71,29 @@ export class EnrollmentService {
 
           this.logger.log(`Created payment for enrollment ${enrollment.id}: ${response.data.id}`);
         } catch (error) {
-          this.logger.error(`Failed to create payment for enrollment ${enrollment.id}`, error.stack);
+          if (error.response) {
+            // Server responded with a status other than 200 range
+            this.logger.error(`Payment service error: ${error.response.data}`);
+          } else if (error.request) {
+            // Request was made but no response received
+            this.logger.error("Network error: Payment service did not respond");
+          } else {
+            // Something else happened in setting up the request
+            this.logger.error(`Error: ${error.message}`);
+          }
           // Không throw error ở đây, vẫn trả về enrollment
         }
       }
 
       // Send enrollment email
-      await this.sendEnrollmentEmail(data.userId, data.courseId);
+      // await this.sendEnrollmentEmail(data.userId, data.courseId);
+      const resend = new Resend('re_Ac251hLj_HUjssDhXHaj9tSRQBtSKQQZ9');
+      await resend.emails.send({
+        from: 'Acme <payment@eduforge.io.vn>',
+        to: ['thinhdz1500@gmail.com'],
+        subject: 'Thanh toán khóa học thành công',
+        html: 'Chúc mừng bạn đã đăng ký khóa học thành công',
+      });
 
       return enrollment;
     } catch (error) {

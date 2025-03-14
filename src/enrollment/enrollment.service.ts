@@ -1,107 +1,77 @@
 // src/enrollment/enrollment.service.ts
-import {
-  Injectable,
-  ConflictException,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
-import { PrismaClient, EnrollmentStatus } from '@prisma/client';
-import { MailerService } from '@nestjs-modules/mailer';
-import { HttpService } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
-import { Resend } from 'resend';
+import { Injectable, ConflictException, NotFoundException, Logger } from "@nestjs/common"
+import { PrismaClient, EnrollmentStatus } from "@prisma/client"
+import { MailerService } from "@nestjs-modules/mailer"
+import { HttpService } from "@nestjs/axios"
+import { ConfigService } from "@nestjs/config"
+import { Resend } from "resend"
 
 @Injectable()
 export class EnrollmentService {
-  private readonly logger = new Logger(EnrollmentService.name);
+  private readonly logger = new Logger(EnrollmentService.name)
+  private prisma: PrismaClient
 
   constructor(
-    private prisma: PrismaClient, 
     private mailerService: MailerService,
     private httpService: HttpService,
-    private configService: ConfigService
-  ) {}
+    private configService: ConfigService,
+  ) {
+    this.prisma = new PrismaClient()
+  }
 
   // Tạo enrollment mới
   async create(data: {
-    courseId: string;
-    userId: string;
-    isFree?: boolean;
-    courseName?: string;
-    userName?: string;
+    courseId: string
+    userId: string
+    isFree?: boolean
+    courseName?: string
+    userName?: string
+    paymentId?: string
+    status?: EnrollmentStatus
   }) {
     try {
+      // Xác định trạng thái enrollment
+      let enrollmentStatus: EnrollmentStatus
+
+      if (data.status) {
+        // Sử dụng trạng thái được chỉ định
+        enrollmentStatus = data.status
+      } else if (data.isFree) {
+        // Khóa học miễn phí luôn ACTIVE
+        enrollmentStatus = EnrollmentStatus.ACTIVE
+      } else if (data.paymentId) {
+        // Có payment ID, đã thanh toán
+        enrollmentStatus = EnrollmentStatus.ACTIVE
+      } else {
+        // Mặc định là PENDING
+        enrollmentStatus = EnrollmentStatus.PENDING
+      }
+
       const enrollment = await this.prisma.enrollment.create({
         data: {
           courseId: data.courseId,
           userId: data.userId,
           isFree: data.isFree || false,
-          status: data.isFree ? EnrollmentStatus.ACTIVE : EnrollmentStatus.PENDING,
+          status: enrollmentStatus,
           updatedAt: new Date(),
           courseName: data.courseName,
           userName: data.userName,
+          paymentId: data.paymentId,
         },
-      });
+      })
 
-      // Nếu không phải khóa học miễn phí, tạo payment thông qua Payment Service
-      if (!data.isFree) {
-        try {
-          // Gọi đến Payment Service để tạo payment
-          const paymentServiceUrl = this.configService.get<string>('PAYMENT_SERVICE_URL');
-          const response = await firstValueFrom(
-            this.httpService.post(`${paymentServiceUrl}/payments`, {
-              serviceId: enrollment.id,
-              serviceType: 'COURSE_ENROLLMENT',
-              amount: 0, // Giá trị này sẽ được lấy từ Course Service
-              description: `Thanh toán khóa học: ${data.courseName || data.courseId}`,
-              returnUrl: `${this.configService.get<string>('APP_URL')}/courses/${data.courseId}/payment-success`,
-              cancelUrl: `${this.configService.get<string>('APP_URL')}/courses/${data.courseId}/payment-cancel`,
-            })
-          );
-          
-          // Cập nhật paymentId vào enrollment
-          await this.prisma.enrollment.update({
-            where: { id: enrollment.id },
-            data: {
-              paymentId: response.data.id,
-              updatedAt: new Date(),
-            },
-          });
-
-          this.logger.log(`Created payment for enrollment ${enrollment.id}: ${response.data.id}`);
-        } catch (error) {
-          if (error.response) {
-            // Server responded with a status other than 200 range
-            this.logger.error(`Payment service error: ${error.response.data}`);
-          } else if (error.request) {
-            // Request was made but no response received
-            this.logger.error("Network error: Payment service did not respond");
-          } else {
-            // Something else happened in setting up the request
-            this.logger.error(`Error: ${error.message}`);
-          }
-          // Không throw error ở đây, vẫn trả về enrollment
-        }
+      // Gửi email xác nhận đăng ký
+      if (enrollmentStatus === EnrollmentStatus.ACTIVE) {
+        await this.sendEnrollmentConfirmationEmail(data.userId, data.courseId, data.courseName)
       }
 
-      // Send enrollment email
-      // await this.sendEnrollmentEmail(data.userId, data.courseId);
-      const resend = new Resend('re_Ac251hLj_HUjssDhXHaj9tSRQBtSKQQZ9');
-      await resend.emails.send({
-        from: 'Acme <payment@eduforge.io.vn>',
-        to: ['thinhdz1500@gmail.com'],
-        subject: 'Thanh toán khóa học thành công',
-        html: 'Chúc mừng bạn đã đăng ký khóa học thành công',
-      });
-
-      return enrollment;
+      return enrollment
     } catch (error) {
-      if (error.code === 'P2002') {
-        throw new ConflictException('User is already enrolled in this course');
+      if (error.code === "P2002") {
+        throw new ConflictException("User is already enrolled in this course")
       }
-      this.logger.error(`Failed to create enrollment`, error.stack);
-      throw error;
+      this.logger.error(`Failed to create enrollment`, error.stack)
+      throw error
     }
   }
 
@@ -112,7 +82,7 @@ export class EnrollmentService {
       include: {
         Certificate: true,
       },
-    });
+    })
   }
 
   // Lấy chi tiết một enrollment (theo id của enrollment)
@@ -123,18 +93,18 @@ export class EnrollmentService {
         Certificate: true,
         UserProgress: true,
       },
-    });
+    })
 
     if (!enrollment) {
-      throw new NotFoundException(`Enrollment with ID ${id} not found`);
+      throw new NotFoundException(`Enrollment with ID ${id} not found`)
     }
 
-    return enrollment;
+    return enrollment
   }
 
   // Cập nhật trạng thái enrollment
   async updateStatus(id: string, status: EnrollmentStatus) {
-    const enrollment = await this.findOneByEnrollmentID(id);
+    const enrollment = await this.findOneByEnrollmentID(id)
 
     return this.prisma.enrollment.update({
       where: { id },
@@ -143,7 +113,7 @@ export class EnrollmentService {
         updatedAt: new Date(),
         ...(status === EnrollmentStatus.COMPLETED ? { completedAt: new Date() } : {}),
       },
-    });
+    })
   }
 
   // Kiểm tra xem user đã đăng ký khóa học chưa
@@ -156,48 +126,120 @@ export class EnrollmentService {
           in: [EnrollmentStatus.ACTIVE, EnrollmentStatus.COMPLETED],
         },
       },
-    });
-    return !!enrollment;
+    })
+    return !!enrollment
   }
 
   async findAll(filters?: {
-    userId?: string;
-    status?: EnrollmentStatus;
+    userId?: string
+    status?: EnrollmentStatus
   }) {
-    const where: any = {};
-    if (filters?.userId) where.userId = filters.userId;
-    if (filters?.status) where.status = filters.status;
+    const where: any = {}
+    if (filters?.userId) where.userId = filters.userId
+    if (filters?.status) where.status = filters.status
 
     return this.prisma.enrollment.findMany({
       where,
       include: {
         Certificate: true,
       },
-    });
+    })
   }
 
-  // Gửi email khi user đăng ký khóa học
-  async sendEnrollmentEmail(userId: string, courseId: string): Promise<void> {
+  // Gửi email khi user đăng ký khóa học thành công
+  async sendEnrollmentConfirmationEmail(userId: string, courseId: string, courseName?: string): Promise<void> {
     try {
-      await this.mailerService.sendMail({
-        to: this.configService.get<string>('ENROLLMENT_MAILER_USER'), // Thay bằng email thật từ user service
-        from: this.configService.get<string>('MAIL_FROM'),
-        subject: 'Đăng ký khóa học thành công',
-        template: 'enrollment',
-        context: {
-          name: "user",
-          courseId: courseId,
-          userId: userId
-        }
-      });
-      this.logger.log(`Sent enrollment email to user ${userId} for course ${courseId}`);
+      const resend = new Resend(process.env.RESEND_API_KEY)
+      await resend.emails.send({
+        from: "Acme <enrollment@eduforge.io.vn>",
+        to: ["thinhdz1500@gmail.com"], // Thay bằng email thật từ user service
+        subject: "Đăng ký khóa học thành công",
+        html: `
+          <h1>Chúc mừng bạn đã đăng ký khóa học thành công</h1>
+          <p>Cảm ơn bạn đã đăng ký khóa học ${courseName || courseId}.</p>
+          <p>Bạn có thể bắt đầu học ngay bây giờ.</p>
+        `,
+      })
+      this.logger.log(`Sent enrollment confirmation email to user ${userId} for course ${courseId}`)
     } catch (error) {
-      this.logger.error(`Failed to send enrollment email`, error.stack);
+      this.logger.error(`Failed to send enrollment confirmation email`, error.stack)
       // Không throw error ở đây, vẫn tiếp tục flow
     }
   }
 
-  // Thêm method mới để cập nhật enrollment khi có bài học mới
+  // Xử lý webhook từ Payment Service
+  async handlePaymentWebhook(data: {
+    serviceId: string
+    serviceType: string
+    status: string
+    paymentId: string
+  }) {
+    // Chỉ xử lý webhook cho COURSE_ENROLLMENT
+    if (data.serviceType !== "COURSE_ENROLLMENT") {
+      this.logger.warn(`Received webhook for unsupported service type: ${data.serviceType}`)
+      throw new NotFoundException(`Service type ${data.serviceType} not supported`)
+    }
+
+    // Kiểm tra xem đã có enrollment chưa
+    const existingEnrollment = await this.prisma.enrollment.findFirst({
+      where: {
+        courseId: data.serviceId,
+        paymentId: data.paymentId,
+      },
+    })
+
+    if (existingEnrollment) {
+      // Cập nhật trạng thái enrollment dựa trên trạng thái payment
+      let enrollmentStatus
+      switch (data.status) {
+        case "COMPLETED":
+          enrollmentStatus = EnrollmentStatus.ACTIVE
+          break
+        case "FAILED":
+        case "EXPIRED":
+        case "CANCELLED":
+          enrollmentStatus = EnrollmentStatus.CANCELLED
+          break
+        default:
+          enrollmentStatus = existingEnrollment.status // Giữ nguyên trạng thái
+      }
+
+      this.logger.log(
+        `Updating enrollment ${existingEnrollment.id} status to ${enrollmentStatus} based on payment ${data.paymentId} status ${data.status}`,
+      )
+
+      return this.prisma.enrollment.update({
+        where: { id: existingEnrollment.id },
+        data: {
+          status: enrollmentStatus,
+          updatedAt: new Date(),
+        },
+      })
+    } else {
+      // Nếu chưa có enrollment, tạo mới nếu thanh toán thành công
+      if (data.status === "COMPLETED") {
+        // Trong thực tế, bạn sẽ cần lấy thêm thông tin từ Course Service và User Service
+        // Ở đây chúng ta giả định đã có thông tin
+        this.logger.log(`Creating new enrollment for course ${data.serviceId} after payment ${data.paymentId}`)
+
+        // Lấy thông tin user và course từ payment
+        // Trong thực tế, bạn sẽ gọi API đến Payment Service để lấy thông tin này
+        const userId = "USER-ID" // Thay bằng cách lấy từ Payment Service
+
+        return this.create({
+          courseId: data.serviceId,
+          userId,
+          isFree: false,
+          paymentId: data.paymentId,
+          status: EnrollmentStatus.ACTIVE,
+        })
+      }
+    }
+
+    return { message: "Payment processed but no action taken" }
+  }
+
+  // Các phương thức khác giữ nguyên
   async updateEnrollmentForNewLesson(courseId: string, lessonData: any) {
     // Tìm tất cả enrollment active của khóa học
     const enrollments = await this.prisma.enrollment.findMany({
@@ -205,9 +247,9 @@ export class EnrollmentService {
         courseId: courseId,
         status: EnrollmentStatus.ACTIVE,
       },
-    });
+    })
 
-    this.logger.log(`Found ${enrollments.length} active enrollments for course ${courseId}`);
+    this.logger.log(`Found ${enrollments.length} active enrollments for course ${courseId}`)
 
     // Cập nhật progress cho mỗi enrollment
     for (const enrollment of enrollments) {
@@ -220,108 +262,48 @@ export class EnrollmentService {
           progress: 0,
           updatedAt: new Date(),
         },
-      });
+      })
 
       // Gửi email thông báo cho user
-      await this.sendNewLessonNotification(
-        enrollment.userId,
-        enrollment.userName,
-        enrollment.courseName,
-        lessonData,
-      );
+      await this.sendNewLessonNotification(enrollment.userId, enrollment.userName, enrollment.courseName, lessonData)
     }
 
-    return { success: true, affectedEnrollments: enrollments.length };
+    return { success: true, affectedEnrollments: enrollments.length }
   }
 
-  // Gửi email thông báo bài học mới
-  private async sendNewLessonNotification(
-    userId: string,
-    userName: string,
-    courseName: string,
-    lessonData: any,
-  ) {
+  private async sendNewLessonNotification(userId: string, userName: string, courseName: string, lessonData: any) {
     try {
       await this.mailerService.sendMail({
-        to: this.configService.get<string>('ENROLLMENT_MAILER_USER'), // Thay bằng email thật từ user service
-        from: this.configService.get<string>('MAIL_FROM'),
-        subject: 'Bài học mới đã được thêm vào khóa học của bạn',
-        template: 'new-lesson',
+        to: this.configService.get<string>("ENROLLMENT_MAILER_USER"), // Thay bằng email thật từ user service
+        from: this.configService.get<string>("MAIL_FROM"),
+        subject: "Bài học mới đã được thêm vào khóa học của bạn",
+        template: "new-lesson",
         context: {
-          name: userName || 'Học viên',
-          courseName: courseName || 'Khóa học của bạn',
-          lessonTitle: lessonData.title || 'Bài học mới',
-          lessonDescription: lessonData.description || 'Nội dung bài học mới',
+          name: userName || "Học viên",
+          courseName: courseName || "Khóa học của bạn",
+          lessonTitle: lessonData.title || "Bài học mới",
+          lessonDescription: lessonData.description || "Nội dung bài học mới",
         },
-      });
-      this.logger.log(`Sent new lesson notification to user ${userId}`);
+      })
+      this.logger.log(`Sent new lesson notification to user ${userId}`)
     } catch (error) {
-      this.logger.error(`Failed to send new lesson notification`, error.stack);
+      this.logger.error(`Failed to send new lesson notification`, error.stack)
       // Không throw error ở đây, vẫn tiếp tục flow
     }
   }
 
-  // Xử lý webhook từ Payment Service
-  async handlePaymentWebhook(data: {
-    serviceId: string;
-    serviceType: string;
-    status: string;
-    paymentId: string;
-  }) {
-    // Chỉ xử lý webhook cho COURSE_ENROLLMENT
-    if (data.serviceType !== 'COURSE_ENROLLMENT') {
-      this.logger.warn(`Received webhook for unsupported service type: ${data.serviceType}`);
-      throw new NotFoundException(`Service type ${data.serviceType} not supported`);
-    }
-
-    const enrollment = await this.prisma.enrollment.findUnique({
-      where: { id: data.serviceId },
-    });
-
-    if (!enrollment) {
-      this.logger.warn(`Received webhook for non-existent enrollment: ${data.serviceId}`);
-      throw new NotFoundException(`Enrollment with ID ${data.serviceId} not found`);
-    }
-
-    // Cập nhật trạng thái enrollment dựa trên trạng thái payment
-    let enrollmentStatus;
-    switch (data.status) {
-      case 'COMPLETED':
-        enrollmentStatus = EnrollmentStatus.ACTIVE;
-        break;
-      case 'FAILED':
-      case 'EXPIRED':
-      case 'CANCELLED':
-        enrollmentStatus = EnrollmentStatus.CANCELLED;
-        break;
-      default:
-        enrollmentStatus = enrollment.status; // Giữ nguyên trạng thái
-    }
-
-    this.logger.log(`Updating enrollment ${enrollment.id} status to ${enrollmentStatus} based on payment ${data.paymentId} status ${data.status}`);
-
-    return this.prisma.enrollment.update({
-      where: { id: enrollment.id },
-      data: {
-        status: enrollmentStatus,
-        paymentId: data.paymentId,
-        updatedAt: new Date(),
-      },
-    });
-  }
-
   // Tạo certificate cho enrollment
   async createCertificate(enrollmentId: string, certificateUrl: string) {
-    const enrollment = await this.findOneByEnrollmentID(enrollmentId);
+    const enrollment = await this.findOneByEnrollmentID(enrollmentId)
 
     if (enrollment.status !== EnrollmentStatus.COMPLETED) {
-      throw new ConflictException('Cannot create certificate for incomplete enrollment');
+      throw new ConflictException("Cannot create certificate for incomplete enrollment")
     }
 
     // Kiểm tra xem đã có certificate chưa
     const existingCertificate = await this.prisma.certificate.findFirst({
       where: { enrollmentId: enrollmentId },
-    });
+    })
 
     if (existingCertificate) {
       return this.prisma.certificate.update({
@@ -330,7 +312,7 @@ export class EnrollmentService {
           certificateUrl: certificateUrl,
           updatedAt: new Date(),
         },
-      });
+      })
     }
 
     return this.prisma.certificate.create({
@@ -340,6 +322,7 @@ export class EnrollmentService {
         issuedAt: new Date(),
         updatedAt: new Date(),
       },
-    });
+    })
   }
 }
+

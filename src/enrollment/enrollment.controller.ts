@@ -54,6 +54,7 @@ import {
         isFree?: boolean;
         courseName?: string;
         userName?: string;
+        paymentId?: string;
       },
     ) {
       this.logger.log(`Creating enrollment for user ${data.userId} in course ${data.courseId}`);

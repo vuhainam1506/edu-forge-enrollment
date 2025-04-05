@@ -22,7 +22,7 @@ export class EnrollmentService {
   // Tạo enrollment mới
   async create(data: {
     courseId: string
-    userId: string
+    userId?: string
     isFree?: boolean
     courseName?: string
     userName?: string

@@ -10,6 +10,8 @@ import {
     Logger,
     HttpCode,
     HttpStatus,
+    Header,
+    Headers
   } from '@nestjs/common';
   import { EnrollmentService } from './enrollment.service';
   import { EnrollmentStatus } from '@prisma/client';
@@ -50,13 +52,19 @@ import {
     async create(
       @Body() data: { 
         courseId: string; 
-        userId: string; 
+        userId?: string; 
         isFree?: boolean;
         courseName?: string;
         userName?: string;
         paymentId?: string;
       },
+      @Headers('X-User-Id') userId?: string,
+      @Headers('X-Test') testVal?: string,
+      @Headers('X-Issuer') iss?: string,
     ) {
+      console.log("X-Iss", iss);
+        data.userId = userId;
+      
       this.logger.log(`Creating enrollment for user ${data.userId} in course ${data.courseId}`);
       return this.enrollmentService.create(data);
     }

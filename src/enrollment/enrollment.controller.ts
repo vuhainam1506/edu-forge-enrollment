@@ -62,7 +62,7 @@ import {
       @Headers('X-Test') testVal?: string,
       @Headers('X-Issuer') iss?: string,
     ) {
-      console.log("X-Iss", iss);
+      console.log("X-User-Id", userId);
         data.userId = userId;
       
       this.logger.log(`Creating enrollment for user ${data.userId} in course ${data.courseId}`);

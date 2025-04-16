@@ -16,7 +16,7 @@ import {
   import { EnrollmentService } from './enrollment.service';
   import { EnrollmentStatus } from '@prisma/client';
   
-  @Controller('enrollment')
+  @Controller('')
   export class EnrollmentController {
     private readonly logger = new Logger(EnrollmentController.name);
   
@@ -48,30 +48,9 @@ import {
       return this.enrollmentService.handlePaymentWebhook(data);
     }
   
-    @Post()
-    async create(
-      @Body() data: { 
-        courseId: string; 
-        userId?: string; 
-        isFree?: boolean;
-        courseName?: string;
-        userName?: string;
-        paymentId?: string;
-      },
-      @Headers('X-User-Id') userId?: string,
-      @Headers('X-Test') testVal?: string,
-      @Headers('X-Issuer') iss?: string,
-    ) {
-      console.log("X-User-Id", userId);
-        data.userId = userId;
-      
-      this.logger.log(`Creating enrollment for user ${data.userId} in course ${data.courseId}`);
-      return this.enrollmentService.create(data);
-    }
-  
     @Get()
     async findAll(
-      @Query('userId') userId?: string,
+      @Headers('X-User-Id') userId?: string,
       @Query('status') status?: EnrollmentStatus,
     ) {
       this.logger.log(`Getting all enrollments with filters: userId=${userId}, status=${status}`);
@@ -79,7 +58,10 @@ import {
     }
   
     @Get(':id')
-    async findOne(@Param('id') id: string) {
+    async findOne(
+      @Param('id') id: string,
+      @Headers('X-User-Id') userId?: string,
+    ) {
       this.logger.log(`Getting enrollment with ID ${id}`);
       return this.enrollmentService.findOneByEnrollmentID(id);
     }
@@ -88,13 +70,17 @@ import {
     async updateStatus(
       @Param('id') id: string,
       @Body('status') status: EnrollmentStatus,
+      @Headers('X-User-Id') userId?: string,
     ) {
       this.logger.log(`Updating enrollment ${id} status to ${status}`);
       return this.enrollmentService.updateStatus(id, status);
     }
   
     @Get('user/:userId/courses')
-    async getUserEnrollments(@Param('userId') userId: string) {
+    async getUserEnrollments(
+      @Param('userId') userId: string,
+      @Headers('X-User-Id') requestUserId?: string,
+    ) {
       this.logger.log(`Getting enrollments for user ${userId}`);
       return this.enrollmentService.findByUserId(userId);
     }
@@ -103,6 +89,7 @@ import {
     async checkEnrollment(
       @Param('userId') userId: string,
       @Param('courseId') courseId: string,
+      @Headers('X-User-Id') requestUserId?: string,
     ) {
       this.logger.log(`Checking enrollment for user ${userId} in course ${courseId}`);
       return {
@@ -114,6 +101,7 @@ import {
     async createCertificate(
       @Param('id') id: string,
       @Body('certificateUrl') certificateUrl: string,
+      @Headers('X-User-Id') userId?: string,
     ) {
       this.logger.log(`Creating certificate for enrollment ${id}`);
       return this.enrollmentService.createCertificate(id, certificateUrl);

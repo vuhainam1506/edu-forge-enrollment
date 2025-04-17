@@ -107,7 +107,7 @@ import {
       return this.enrollmentService.createCertificate(id, certificateUrl);
     }
 
-    @Post('enrollment')
+    @Post('')
     async createEnrollment(
       @Body() data: {
         courseId: string;

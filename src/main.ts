@@ -9,7 +9,7 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://eduforge.io.vn'],
+    origin: ['http://localhost:3000', 'https://eduforge.io.vn', "https://kong.eduforge.io.vn"],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id'],
     credentials: true,

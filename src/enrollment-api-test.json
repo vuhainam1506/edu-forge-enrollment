@@ -1,0 +1,271 @@
+{
+  "info": {
+    "name": "Enrollment Service API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Enrollment Endpoints",
+      "item": [
+        {
+          "name": "Get All Enrollments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/enrollment",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment"]
+            },
+            "description": "Retrieve all enrollments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Enrollments with Filters",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/enrollment?userId=USER-1&status=ACTIVE",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment"],
+              "query": [
+                {
+                  "key": "userId",
+                  "value": "USER-1"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            },
+            "description": "Retrieve enrollments with filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Enrollment by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/enrollment/{{enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "{{enrollment_id}}"]
+            },
+            "description": "Retrieve a specific enrollment by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Free Enrollment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"FREE-COURSE-5\",\n    \"isFree\": true,\n    \"courseName\": \"Python for Beginners\",\n    \"userName\": \"Hoàng Văn E\"\n}"
+            },
+            "description": "Create a new free enrollment"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Paid Enrollment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"PAID-COURSE-6\",\n    \"isFree\": false,\n    \"courseName\": \"Machine Learning with Python\",\n    \"userName\": \"Hoàng Văn E\"\n}"
+            },
+            "description": "Create a new paid enrollment"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Enrollment Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment/{{enrollment_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "{{enrollment_id}}", "status"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"COMPLETED\"\n}"
+            },
+            "description": "Update the status of an enrollment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get User Enrollments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/enrollment/user/USER-1/courses",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "user", "USER-1", "courses"]
+            },
+            "description": "Retrieve all enrollments for a specific user"
+          },
+          "response": []
+        },
+        {
+          "name": "Check Enrollment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/enrollment/check/USER-1/FREE-COURSE-1",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "check", "USER-1", "FREE-COURSE-1"]
+            },
+            "description": "Check if a user is enrolled in a specific course"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Certificate",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment/{{enrollment_id}}/certificate",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "{{enrollment_id}}", "certificate"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"certificateUrl\": \"/certificates/new-certificate.pdf\"\n}"
+            },
+            "description": "Create a certificate for a completed enrollment"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhook Endpoints",
+      "item": [
+        {
+          "name": "Handle Payment Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment/webhook/payment",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "webhook", "payment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"serviceId\": \"{{enrollment_id}}\",\n    \"serviceType\": \"COURSE_ENROLLMENT\",\n    \"status\": \"COMPLETED\",\n    \"paymentId\": \"PAYMENT-NEW-001\"\n}"
+            },
+            "description": "Handle payment webhook to update enrollment status"
+          },
+          "response": []
+        },
+        {
+          "name": "Handle New Lesson Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/enrollment/webhook/new-lesson",
+              "host": ["{{base_url}}"],
+              "path": ["enrollment", "webhook", "new-lesson"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"courseId\": \"FREE-COURSE-2\",\n    \"lessonData\": {\n        \"id\": \"LESSON-2-5\",\n        \"title\": \"Advanced CSS Layouts\",\n        \"description\": \"Learn about Flexbox and Grid layouts in CSS\"\n    }\n}"
+            },
+            "description": "Handle new lesson webhook to update progress for all active enrollments"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3003"
+    },
+    {
+      "key": "enrollment_id",
+      "value": "REPLACE_WITH_ACTUAL_ENROLLMENT_ID"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test(\"Status code is 200 or 201\", function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+          "});",
+          "",
+          "pm.test(\"Response time is less than 500ms\", function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(500);",
+          "});",
+          "",
+          "pm.test(\"Response has JSON body\", function () {",
+          "    pm.response.to.be.json;",
+          "});"
+        ]
+      }
+    }
+  ]
+}

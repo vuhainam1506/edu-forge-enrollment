@@ -106,4 +106,25 @@ import {
       this.logger.log(`Creating certificate for enrollment ${id}`);
       return this.enrollmentService.createCertificate(id, certificateUrl);
     }
+
+    @Post('enrollment')
+    async createEnrollment(
+      @Body() data: {
+        courseId: string;
+        userId: string;
+        userName?: string;
+        courseName?: string;
+        isFree?: boolean;
+      },
+      @Headers('X-User-Id') requestUserId?: string,
+    ) {
+      this.logger.log(`Creating enrollment for user ${data.userId} in course ${data.courseId}`);
+      return this.enrollmentService.create({
+        courseId: data.courseId,
+        userId: data.userId,
+        userName: data.userName,
+        courseName: data.courseName,
+        isFree: data.isFree,
+      });
+    }
   }

@@ -35,26 +35,12 @@ async function main() {
         },
       },
       UserProgress: {
-        create: [
-          {
-            lessonId: 'lesson-js-001',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-js-002',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-js-003',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-js-003',
+          isCompleted: true,
+          progress: 100,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -74,32 +60,12 @@ async function main() {
       currentLesson: 'lesson-html-003',
       updatedAt: new Date(),
       UserProgress: {
-        create: [
-          {
-            lessonId: 'lesson-html-001',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-html-002',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-html-003',
-            isCompleted: false,
-            progress: 30,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-html-004',
-            isCompleted: false,
-            progress: 0,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-html-003',
+          isCompleted: false,
+          progress: 30,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -120,26 +86,12 @@ async function main() {
       paymentId: 'payment-001',
       updatedAt: new Date(),
       UserProgress: {
-        create: [
-          {
-            lessonId: 'lesson-react-001',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-react-002',
-            isCompleted: false,
-            progress: 50,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-react-003',
-            isCompleted: false,
-            progress: 0,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-react-002',
+          isCompleted: false,
+          progress: 50,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -219,38 +171,12 @@ async function main() {
         },
       },
       UserProgress: {
-        create: [
-          {
-            lessonId: 'lesson-fullstack-001',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-fullstack-002',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-fullstack-003',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-fullstack-004',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'lesson-fullstack-005',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-fullstack-005',
+          isCompleted: true,
+          progress: 100,
+          updatedAt: new Date(),
+        },
       },
     },
   });

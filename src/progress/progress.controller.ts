@@ -8,6 +8,24 @@ export class ProgressController {
 
   constructor(private readonly progressService: ProgressService) {}
 
+  @Get('completion/:enrollmentId')
+  async checkEnrollmentCompletion(
+    @Param('enrollmentId') enrollmentId: string,
+  ) {
+    this.logger.log(`Checking completion for enrollment ${enrollmentId}`);
+    return {
+      completed: await this.progressService.checkEnrollmentCompletion(enrollmentId)
+    };
+  }
+
+  @Get('overall/:enrollmentId')
+  async getOverallProgressByEnrollment(
+    @Param('enrollmentId') enrollmentId: string,
+  ) {
+    this.logger.log(`Getting overall progress for enrollment ${enrollmentId}`);
+    return this.progressService.getOverallProgressByEnrollmentId(enrollmentId);
+  }
+
   @Get(':enrollmentId')
   async getProgressByEnrollment(
     @Param('enrollmentId') enrollmentId: string,
@@ -28,23 +46,5 @@ export class ProgressController {
   ) {
     this.logger.log(`Updating progress for enrollment ${enrollmentId}`);
     return this.progressService.updateProgressByEnrollmentId(enrollmentId, updateDto);
-  }
-
-  @Get('completion/:enrollmentId')
-  async checkEnrollmentCompletion(
-    @Param('enrollmentId') enrollmentId: string,
-  ) {
-    this.logger.log(`Checking completion for enrollment ${enrollmentId}`);
-    return {
-      completed: await this.progressService.checkEnrollmentCompletion(enrollmentId)
-    };
-  }
-
-  @Get('overall/:enrollmentId')
-  async getOverallProgressByEnrollment(
-    @Param('enrollmentId') enrollmentId: string,
-  ) {
-    this.logger.log(`Getting overall progress for enrollment ${enrollmentId}`);
-    return this.progressService.getOverallProgressByEnrollmentId(enrollmentId);
   }
 }

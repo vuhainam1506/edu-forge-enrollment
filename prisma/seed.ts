@@ -17,42 +17,30 @@ async function main() {
   // Tạo enrollment miễn phí đã hoàn thành với certificate
   const freeCompletedEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'FREE-COURSE-1',
-      userId: 'USER-1',
+      courseId: 'course-js-basics-001',
+      userId: 'user-001',
       courseName: 'Lập Trình JavaScript Cơ Bản',
       userName: 'Nguyễn Văn A',
       isFree: true,
       status: EnrollmentStatus.COMPLETED,
+      progress: 100,
+      currentLesson: 'lesson-js-003',
       completedAt: new Date(),
       updatedAt: new Date(),
       Certificate: {
         create: {
-          certificateUrl: '/certificates/cert-js-basic.pdf',
+          certificateUrl: '/certificates/cert-js-basic-001.pdf',
           issuedAt: new Date(),
           updatedAt: new Date(),
         },
       },
       UserProgress: {
-        create: [
-          {
-            lessonId: 'LESSON-1-1',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-1-2',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-1-3',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-js-003',
+          isCompleted: true,
+          progress: 100,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -62,40 +50,22 @@ async function main() {
   // Tạo enrollment miễn phí đang học
   const freeActiveEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'FREE-COURSE-2',
-      userId: 'USER-1',
+      courseId: 'course-html-css-001',
+      userId: 'user-001',
       courseName: 'HTML & CSS Fundamentals',
       userName: 'Nguyễn Văn A',
       isFree: true,
       status: EnrollmentStatus.ACTIVE,
+      progress: 65,
+      currentLesson: 'lesson-html-003',
       updatedAt: new Date(),
       UserProgress: {
-        create: [
-          {
-            lessonId: 'LESSON-2-1',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-2-2',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-2-3',
-            isCompleted: false,
-            progress: 30,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-2-4',
-            isCompleted: false,
-            progress: 0,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-html-003',
+          isCompleted: false,
+          progress: 30,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -105,35 +75,23 @@ async function main() {
   // Tạo enrollment có phí đã thanh toán và đang học
   const paidActiveEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-1',
-      userId: 'USER-2',
+      courseId: 'course-react-adv-001',
+      userId: 'user-002',
       courseName: 'React.js Advanced',
       userName: 'Trần Thị B',
       isFree: false,
       status: EnrollmentStatus.ACTIVE,
-      paymentId: 'PAYMENT-001',
+      progress: 50,
+      currentLesson: 'lesson-react-002',
+      paymentId: 'payment-001',
       updatedAt: new Date(),
       UserProgress: {
-        create: [
-          {
-            lessonId: 'LESSON-3-1',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-3-2',
-            isCompleted: false,
-            progress: 50,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-3-3',
-            isCompleted: false,
-            progress: 0,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-react-002',
+          isCompleted: false,
+          progress: 50,
+          updatedAt: new Date(),
+        },
       },
     },
   });
@@ -143,13 +101,14 @@ async function main() {
   // Tạo enrollment có phí đang chờ thanh toán
   const paidPendingEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-2',
-      userId: 'USER-2',
+      courseId: 'course-nestjs-001',
+      userId: 'user-002',
       courseName: 'NestJS Masterclass',
       userName: 'Trần Thị B',
       isFree: false,
       status: EnrollmentStatus.PENDING,
-      paymentId: 'PAYMENT-002',
+      progress: 0,
+      paymentId: 'payment-002',
       updatedAt: new Date(),
     },
   });
@@ -159,13 +118,14 @@ async function main() {
   // Tạo enrollment bị hủy
   const cancelledEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-3',
-      userId: 'USER-3',
+      courseId: 'course-docker-k8s-001',
+      userId: 'user-003',
       courseName: 'Docker & Kubernetes',
       userName: 'Lê Văn C',
       isFree: false,
       status: EnrollmentStatus.CANCELLED,
-      paymentId: 'PAYMENT-003',
+      progress: 0,
+      paymentId: 'payment-003',
       updatedAt: new Date(),
     },
   });
@@ -175,13 +135,14 @@ async function main() {
   // Tạo enrollment thất bại
   const failedEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-4',
-      userId: 'USER-3',
+      courseId: 'course-aws-001',
+      userId: 'user-003',
       courseName: 'AWS Cloud Practitioner',
       userName: 'Lê Văn C',
       isFree: false,
       status: EnrollmentStatus.FAILED,
-      paymentId: 'PAYMENT-004',
+      progress: 0,
+      paymentId: 'payment-004',
       updatedAt: new Date(),
     },
   });
@@ -191,55 +152,31 @@ async function main() {
   // Tạo enrollment có phí đã hoàn thành với certificate
   const paidCompletedEnrollment = await prisma.enrollment.create({
     data: {
-      courseId: 'PAID-COURSE-5',
-      userId: 'USER-4',
+      courseId: 'course-fullstack-001',
+      userId: 'user-004',
       courseName: 'Full Stack Web Development',
       userName: 'Phạm Thị D',
       isFree: false,
       status: EnrollmentStatus.COMPLETED,
-      paymentId: 'PAYMENT-005',
+      progress: 100,
+      currentLesson: 'lesson-fullstack-005',
+      paymentId: 'payment-005',
       completedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       updatedAt: new Date(),
       Certificate: {
         create: {
-          certificateUrl: '/certificates/cert-fullstack-web.pdf',
+          certificateUrl: '/certificates/cert-fullstack-web-001.pdf',
           issuedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
           updatedAt: new Date(),
         },
       },
       UserProgress: {
-        create: [
-          {
-            lessonId: 'LESSON-5-1',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-5-2',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-5-3',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-5-4',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-          {
-            lessonId: 'LESSON-5-5',
-            isCompleted: true,
-            progress: 100,
-            updatedAt: new Date(),
-          },
-        ],
+        create: {
+          lessonId: 'lesson-fullstack-005',
+          isCompleted: true,
+          progress: 100,
+          updatedAt: new Date(),
+        },
       },
     },
   });

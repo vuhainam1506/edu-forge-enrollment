@@ -1,66 +1,50 @@
 // src/progress/progress.controller.ts
-import { Controller, Get, Param, Post, Body, Put, Logger } from '@nestjs/common';
+import { Controller, Get, Param, Put, Body, Logger } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 
-@Controller('progress')
+@Controller('api/v1/progress')
 export class ProgressController {
   private readonly logger = new Logger(ProgressController.name);
 
   constructor(private readonly progressService: ProgressService) {}
 
-  @Get(':userId/:courseId')
-  async getProgress(
-    @Param('userId') userId: string,
-    @Param('courseId') courseId: string,
+  @Get(':enrollmentId')
+  async getProgressByEnrollment(
+    @Param('enrollmentId') enrollmentId: string,
   ) {
-    this.logger.log(`Getting progress for user ${userId} in course ${courseId}`);
-    return this.progressService.getProgress(userId, courseId);
+    this.logger.log(`Getting progress for enrollment ${enrollmentId}`);
+    return this.progressService.getProgressByEnrollmentId(enrollmentId);
   }
 
-  @Post()
-  async createProgress(
-    @Body() createProgressDto: {
-      enrollmentId: string;
-      lessonId: string;
-      isCompleted?: boolean;
+  @Put(':enrollmentId')
+  async updateProgressByEnrollment(
+    @Param('enrollmentId') enrollmentId: string,
+    @Body() updateDto: {
       progress?: number;
+      currentLesson?: string;
+      lessonId?: string;
+      isLessonCompleted?: boolean;
     }
   ) {
-    this.logger.log(`Creating progress for enrollment ${createProgressDto.enrollmentId}`);
-    return this.progressService.createProgress(createProgressDto);
+    this.logger.log(`Updating progress for enrollment ${enrollmentId}`);
+    return this.progressService.updateProgressByEnrollmentId(enrollmentId, updateDto);
   }
 
-  @Put(':userId/:courseId')
-  async updateProgress(
-    @Param('userId') userId: string,
-    @Param('courseId') courseId: string,
-    @Body() updateProgressDto: {
-      lessonId: string;
-      isCompleted?: boolean;
-      progress?: number;
-    }
+  @Get('completion/:enrollmentId')
+  async checkEnrollmentCompletion(
+    @Param('enrollmentId') enrollmentId: string,
   ) {
-    this.logger.log(`Updating progress for user ${userId} in course ${courseId}`);
-    return this.progressService.updateProgress(userId, courseId, updateProgressDto);
-  }
-
-  @Get(':userId/:courseId/check-completion')
-  async checkCourseCompletion(
-    @Param('userId') userId: string,
-    @Param('courseId') courseId: string,
-  ) {
-    this.logger.log(`Checking course completion for user ${userId} in course ${courseId}`);
+    this.logger.log(`Checking completion for enrollment ${enrollmentId}`);
     return {
-      completed: await this.progressService.checkCourseCompletion(userId, courseId)
+      completed: await this.progressService.checkEnrollmentCompletion(enrollmentId)
     };
   }
 
-  @Get(':userId/:courseId/overall')
-  async getOverallProgress(
-    @Param('userId') userId: string,
-    @Param('courseId') courseId: string,
+  @Get('overall/:enrollmentId')
+  async getOverallProgressByEnrollment(
+    @Param('enrollmentId') enrollmentId: string,
   ) {
-    this.logger.log(`Getting overall progress for user ${userId} in course ${courseId}`);
-    return this.progressService.getOverallProgress(userId, courseId);
+    this.logger.log(`Getting overall progress for enrollment ${enrollmentId}`);
+    return this.progressService.getOverallProgressByEnrollmentId(enrollmentId);
   }
 }

@@ -4,8 +4,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Add global prefix
-  app.setGlobalPrefix('');
+  // Thay đổi global prefix thành /api/v1
+  app.setGlobalPrefix('api/v1');
 
   // Enable CORS
   app.enableCors({

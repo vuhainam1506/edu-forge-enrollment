@@ -2,7 +2,7 @@
 import { Controller, Get, Param, Put, Body, Logger } from '@nestjs/common';
 import { ProgressService } from './progress.service';
 
-@Controller('api/v1/progress')
+@Controller('progress')
 export class ProgressController {
   private readonly logger = new Logger(ProgressController.name);
 

@@ -21,7 +21,7 @@ import {
 import { EnrollmentService } from './enrollment.service';
 import { EnrollmentStatus } from '@prisma/client';
 
-@Controller('api/v1')
+@Controller('api/v1/enrollment')
 export class EnrollmentController {
   private readonly logger = new Logger(EnrollmentController.name);
 

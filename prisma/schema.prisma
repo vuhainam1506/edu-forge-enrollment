@@ -9,31 +9,33 @@ datasource db {
 
 model Certificate {
   id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollmentId   String     @db.Uuid
+  enrollmentId   String     @unique(map: "unique_enrollment_certificate") @db.Uuid
   certificateUrl String     @db.VarChar(255)
   issuedAt       DateTime   @default(now()) @db.Timestamp(6)
   updatedAt      DateTime   @default(now()) @db.Timestamp(6)
-  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_enrollment")
 
   @@index([enrollmentId], map: "certificates_enrollmentId_idx")
 }
 
 model Enrollment {
-  id           String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId       String           @db.VarChar(255)
-  courseId     String           @db.VarChar(255)
-  courseName   String?          @db.VarChar(255)
-  userName     String?          @db.VarChar(255)
-  status       EnrollmentStatus @default(PENDING)
-  isFree       Boolean          @default(false)
-  paymentId    String?          @db.VarChar(255)
-  createdAt    DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt    DateTime         @default(now()) @db.Timestamp(6)
-  completedAt  DateTime?        @db.Timestamp(6)
-  Certificate  Certificate[]
-  UserProgress UserProgress[]
+  id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String           @db.VarChar(255)
+  courseId      String           @db.VarChar(255)
+  courseName    String?          @db.VarChar(255)
+  userName      String?          @db.VarChar(255)
+  status        EnrollmentStatus @default(PENDING)
+  isFree        Boolean          @default(false)
+  paymentId     String?          @db.VarChar(255)
+  progress      Float            @default(0)
+  currentLesson String?          @db.VarChar(255)
+  createdAt     DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt     DateTime         @default(now()) @db.Timestamp(6)
+  completedAt   DateTime?        @db.Timestamp(6)
+  Certificate   Certificate?
+  UserProgress  UserProgress?
 
-  @@unique([userId, courseId])
+  @@unique([userId, courseId], map: "unique_user_course")
   @@index([courseId], map: "enrollments_courseId_idx")
   @@index([status], map: "enrollments_status_idx")
   @@index([userId], map: "enrollments_userId_idx")
@@ -41,16 +43,14 @@ model Enrollment {
 
 model UserProgress {
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollmentId String     @db.Uuid
+  enrollmentId String     @unique(map: "unique_enrollment_progress") @db.Uuid
   lessonId     String     @db.VarChar(255)
   isCompleted  Boolean    @default(false)
-  progress     Int        @default(0)
+  progress     Float      @default(0)
   updatedAt    DateTime   @default(now()) @db.Timestamp(6)
-  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_enrollment_progress")
 
-  @@unique([enrollmentId, lessonId])
   @@index([enrollmentId], map: "user_progress_enrollmentId_idx")
-  @@index([lessonId], map: "user_progress_lessonId_idx")
 }
 
 enum EnrollmentStatus {

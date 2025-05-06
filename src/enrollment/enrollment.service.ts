@@ -168,45 +168,40 @@ export class EnrollmentService {
   }
 
   // Xử lý webhook từ Payment Service
-  async handlePaymentWebhook(data: {
-    serviceId: string
-    serviceType: string
-    status: string
-    paymentId: string
+  async processPaymentUpdate(data: {
+    paymentId: string;
+    serviceId: string; // courseId
+    status: string;
+    // Các trường khác từ payment service
   }) {
-    // Chỉ xử lý webhook cho COURSE_ENROLLMENT
-    if (data.serviceType !== "COURSE_ENROLLMENT") {
-      this.logger.warn(`Received webhook for unsupported service type: ${data.serviceType}`)
-      throw new NotFoundException(`Service type ${data.serviceType} not supported`)
-    }
+    this.logger.log(`Processing payment update for payment ${data.paymentId}, course ${data.serviceId}, status ${data.status}`);
 
-    // Kiểm tra xem đã có enrollment chưa
+    // Tìm enrollment hiện có dựa trên paymentId
     const existingEnrollment = await this.prisma.enrollment.findFirst({
       where: {
-        courseId: data.serviceId,
         paymentId: data.paymentId,
       },
-    })
+    });
 
     if (existingEnrollment) {
       // Cập nhật trạng thái enrollment dựa trên trạng thái payment
-      let enrollmentStatus
+      let enrollmentStatus;
       switch (data.status) {
         case "COMPLETED":
-          enrollmentStatus = EnrollmentStatus.ACTIVE
-          break
+          enrollmentStatus = EnrollmentStatus.ACTIVE;
+          break;
         case "FAILED":
         case "EXPIRED":
         case "CANCELLED":
-          enrollmentStatus = EnrollmentStatus.CANCELLED
-          break
+          enrollmentStatus = EnrollmentStatus.CANCELLED;
+          break;
         default:
-          enrollmentStatus = existingEnrollment.status // Giữ nguyên trạng thái
+          enrollmentStatus = existingEnrollment.status; // Giữ nguyên trạng thái
       }
 
       this.logger.log(
         `Updating enrollment ${existingEnrollment.id} status to ${enrollmentStatus} based on payment ${data.paymentId} status ${data.status}`,
-      )
+      );
 
       return this.prisma.enrollment.update({
         where: { id: existingEnrollment.id },
@@ -214,61 +209,70 @@ export class EnrollmentService {
           status: enrollmentStatus,
           updatedAt: new Date(),
         },
-      })
+      });
     } else {
-      // Nếu chưa có enrollment, tạo mới nếu thanh toán thành công
-      if (data.status === "COMPLETED") {
-        // Trong thực tế, bạn sẽ cần lấy thêm thông tin từ Course Service và User Service
-        // Ở đây chúng ta giả định đã có thông tin
-        this.logger.log(`Creating new enrollment for course ${data.serviceId} after payment ${data.paymentId}`)
-
-        // Lấy thông tin user và course từ payment
-        // Trong thực tế, bạn sẽ gọi API đến Payment Service để lấy thông tin này
-        const userId = "USER-ID" // Thay bằng cách lấy từ Payment Service
-
-        return this.create({
-          courseId: data.serviceId,
-          userId,
-          isFree: false,
-          paymentId: data.paymentId,
-          status: EnrollmentStatus.ACTIVE,
-        })
-      }
+      // Xử lý các trường hợp khác...
     }
-
-    return { message: "Payment processed but no action taken" }
   }
 
   // Các phương thức khác giữ nguyên
-  async updateEnrollmentForNewLesson(courseId: string, lessonData: any) {
-    // Tìm tất cả enrollment active của khóa học
+  async addNewLessonToAllEnrollments(lessonData: {
+    id: string;
+    title: string;
+    courseId: string;
+    // Các trường khác của lesson
+  }) {
+    this.logger.log(`Adding new lesson ${lessonData.id} to all enrollments for course ${lessonData.courseId}`);
+
+    // Tìm tất cả enrollment đang active cho khóa học
     const enrollments = await this.prisma.enrollment.findMany({
       where: {
-        courseId: courseId,
+        courseId: lessonData.courseId,
         status: EnrollmentStatus.ACTIVE,
       },
-    })
+    });
 
-    this.logger.log(`Found ${enrollments.length} active enrollments for course ${courseId}`)
+    this.logger.log(`Found ${enrollments.length} active enrollments for course ${lessonData.courseId}`);
 
     // Cập nhật progress cho mỗi enrollment
     for (const enrollment of enrollments) {
-      // Cập nhật progress cho bài học mới
-      await this.prisma.userProgress.create({
-        data: {
-          enrollmentId: enrollment.id,
-          lessonId: lessonData.id,
-          isCompleted: false,
-          progress: 0,
-          updatedAt: new Date(),
-        },
-      })
+      try {
+        // Kiểm tra xem đã có UserProgress chưa
+        const existingProgress = await this.prisma.userProgress.findUnique({
+          where: { enrollmentId: enrollment.id },
+        });
 
-      // Gửi email thông báo cho user
-      await this.sendNewLessonNotification(enrollment.userId, enrollment.userName, enrollment.courseName, lessonData)
+        if (existingProgress) {
+          // Cập nhật UserProgress hiện có
+          await this.prisma.userProgress.update({
+            where: { enrollmentId: enrollment.id },
+            data: {
+              lessonId: lessonData.id,
+              isCompleted: false,
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          // Tạo UserProgress mới
+          await this.prisma.userProgress.create({
+            data: {
+              enrollmentId: enrollment.id,
+              lessonId: lessonData.id,
+              isCompleted: false,
+              progress: 0,
+              updatedAt: new Date(),
+            },
+          });
+        }
+
+        // Gửi email thông báo cho user
+        await this.sendNewLessonNotification(enrollment.userId, enrollment.userName, enrollment.courseName, lessonData);
+      } catch (error) {
+        this.logger.error(`Error updating progress for enrollment ${enrollment.id}`, error.stack);
+      }
     }
 
-    return { success: true, affectedEnrollments: enrollments.length }
+    return { success: true, affectedEnrollments: enrollments.length };
   }
 
   private async sendNewLessonNotification(userId: string, userName: string, courseName: string, lessonData: any) {

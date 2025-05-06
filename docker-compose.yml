@@ -24,7 +24,7 @@ services:
         sleep 2;
       done;
       echo 'PostgreSQL is ready!';
-      npx prisma db push deploy && node dist/src/main.js"
+      npx prisma db push --accept-data-loss && node dist/src/main.js"
 
   postgres:
     image: postgres:17

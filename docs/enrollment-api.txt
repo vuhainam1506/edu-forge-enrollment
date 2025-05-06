@@ -1,0 +1,492 @@
+# Enrollment Service API Documentation
+
+## Overview
+Enrollment Service quản lý việc đăng ký khóa học, theo dõi tiến trình học tập và cấp chứng chỉ. Service này cung cấp các API endpoints để tạo, truy vấn, cập nhật enrollment và xử lý các webhook từ các service khác.
+
+## Base URL
+```
+http://localhost:3003/api/v1
+```
+
+## Authentication
+Các API endpoints sử dụng header `X-User-Id` để xác thực người dùng.
+
+## API Endpoints
+
+### 1. Tạo Enrollment Mới
+
+**Endpoint:** `POST /api/v1`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1`
+
+**Mô tả:** Tạo enrollment mới cho một người dùng và khóa học.
+
+**Request Body:**
+```json
+{
+  "courseId": "string",       // ID của khóa học (bắt buộc)
+  "userId": "string",         // ID của người dùng (bắt buộc)
+  "userName": "string",       // Tên người dùng (tùy chọn)
+  "courseName": "string",     // Tên khóa học (tùy chọn)
+  "isFree": boolean           // Khóa học có miễn phí không (tùy chọn)
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "userId": "string",
+  "courseId": "string",
+  "courseName": "string",
+  "userName": "string",
+  "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+  "isFree": boolean,
+  "paymentId": "string",
+  "progress": number,
+  "currentLesson": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "completedAt": "datetime"
+}
+```
+
+**Status Codes:**
+- 201: Enrollment được tạo thành công
+- 409: Người dùng đã đăng ký khóa học này
+- 400: Dữ liệu không hợp lệ
+
+### 2. Lấy Tất Cả Enrollments
+
+**Endpoint:** `GET /api/v1`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1`
+
+**Mô tả:** Lấy danh sách tất cả các enrollments với bộ lọc tùy chọn.
+
+**Query Parameters:**
+- `userId`: ID của người dùng (tùy chọn)
+- `status`: Trạng thái enrollment (tùy chọn)
+
+**Ví dụ:** `http://localhost:3003/api/v1?userId=USER-1&status=ACTIVE`
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "userId": "string",
+    "courseId": "string",
+    "courseName": "string",
+    "userName": "string",
+    "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+    "isFree": boolean,
+    "paymentId": "string",
+    "progress": number,
+    "currentLesson": "string",
+    "createdAt": "datetime",
+    "updatedAt": "datetime",
+    "completedAt": "datetime",
+    "Certificate": {
+      "id": "uuid",
+      "enrollmentId": "uuid",
+      "certificateUrl": "string",
+      "issuedAt": "datetime",
+      "updatedAt": "datetime"
+    }
+  }
+]
+```
+
+**Status Codes:**
+- 200: Thành công
+
+### 3. Lấy Chi Tiết Enrollment
+
+**Endpoint:** `GET /api/v1/:id`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/:id`
+
+**Ví dụ:** `http://localhost:3003/api/v1/123e4567-e89b-12d3-a456-426614174000`
+
+**Mô tả:** Lấy thông tin chi tiết của một enrollment theo ID.
+
+**Path Parameters:**
+- `id`: ID của enrollment
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "userId": "string",
+  "courseId": "string",
+  "courseName": "string",
+  "userName": "string",
+  "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+  "isFree": boolean,
+  "paymentId": "string",
+  "progress": number,
+  "currentLesson": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "completedAt": "datetime",
+  "Certificate": {
+    "id": "uuid",
+    "enrollmentId": "uuid",
+    "certificateUrl": "string",
+    "issuedAt": "datetime",
+    "updatedAt": "datetime"
+  },
+  "UserProgress": {
+    "id": "uuid",
+    "enrollmentId": "uuid",
+    "lessonId": "string",
+    "isCompleted": boolean,
+    "progress": number,
+    "updatedAt": "datetime"
+  }
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+- 404: Không tìm thấy enrollment
+
+### 4. Cập Nhật Trạng Thái Enrollment
+
+**Endpoint:** `PUT /api/v1/:id/status`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/:id/status`
+
+**Ví dụ:** `http://localhost:3003/api/v1/123e4567-e89b-12d3-a456-426614174000/status`
+
+**Mô tả:** Cập nhật trạng thái của một enrollment.
+
+**Path Parameters:**
+- `id`: ID của enrollment
+
+**Request Body:**
+```json
+{
+  "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "userId": "string",
+  "courseId": "string",
+  "courseName": "string",
+  "userName": "string",
+  "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+  "isFree": boolean,
+  "paymentId": "string",
+  "progress": number,
+  "currentLesson": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "completedAt": "datetime"
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+- 404: Không tìm thấy enrollment
+- 400: Dữ liệu không hợp lệ
+
+### 5. Lấy Enrollments Của Người Dùng
+
+**Endpoint:** `GET /api/v1/user/:userId/courses`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/user/:userId/courses`
+
+**Ví dụ:** `http://localhost:3003/api/v1/user/USER-1/courses`
+
+**Mô tả:** Lấy danh sách các khóa học mà một người dùng đã đăng ký.
+
+**Path Parameters:**
+- `userId`: ID của người dùng
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "userId": "string",
+    "courseId": "string",
+    "courseName": "string",
+    "userName": "string",
+    "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+    "isFree": boolean,
+    "paymentId": "string",
+    "progress": number,
+    "currentLesson": "string",
+    "createdAt": "datetime",
+    "updatedAt": "datetime",
+    "completedAt": "datetime",
+    "Certificate": {
+      "id": "uuid",
+      "enrollmentId": "uuid",
+      "certificateUrl": "string",
+      "issuedAt": "datetime",
+      "updatedAt": "datetime"
+    }
+  }
+]
+```
+
+**Status Codes:**
+- 200: Thành công
+
+### 6. Kiểm Tra Enrollment
+
+**Endpoint:** `GET /api/v1/check/:userId/:courseId`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/check/:userId/:courseId`
+
+**Ví dụ:** `http://localhost:3003/api/v1/check/USER-1/FREE-COURSE-1`
+
+**Mô tả:** Kiểm tra xem một người dùng đã đăng ký một khóa học cụ thể chưa.
+
+**Path Parameters:**
+- `userId`: ID của người dùng
+- `courseId`: ID của khóa học
+
+**Response:**
+```json
+{
+  "enrolled": boolean
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+
+### 7. Tạo Chứng Chỉ
+
+**Endpoint:** `POST /api/v1/:id/certificate`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/:id/certificate`
+
+**Ví dụ:** `http://localhost:3003/api/v1/123e4567-e89b-12d3-a456-426614174000/certificate`
+
+**Mô tả:** Tạo chứng chỉ cho một enrollment.
+
+**Path Parameters:**
+- `id`: ID của enrollment
+
+**Request Body:**
+```json
+{
+  "certificateUrl": "string"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "enrollmentId": "uuid",
+  "certificateUrl": "string",
+  "issuedAt": "datetime",
+  "updatedAt": "datetime"
+}
+```
+
+**Status Codes:**
+- 201: Chứng chỉ được tạo thành công
+- 404: Không tìm thấy enrollment
+- 409: Enrollment chưa hoàn thành
+
+### 8. Webhook Thanh Toán
+
+**Endpoint:** `POST /api/v1/webhook/payment`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/webhook/payment`
+
+**Mô tả:** Xử lý webhook từ payment service khi có cập nhật về thanh toán.
+
+**Request Body:**
+```json
+{
+  "serviceId": "string",      // ID của khóa học
+  "serviceType": "string",    // Loại dịch vụ (COURSE_ENROLLMENT)
+  "status": "string",         // Trạng thái thanh toán (COMPLETED, FAILED, EXPIRED, CANCELLED)
+  "paymentId": "string"       // ID của giao dịch thanh toán
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "userId": "string",
+  "courseId": "string",
+  "courseName": "string",
+  "userName": "string",
+  "status": "PENDING|ACTIVE|COMPLETED|CANCELLED|FAILED",
+  "isFree": boolean,
+  "paymentId": "string",
+  "progress": number,
+  "currentLesson": "string",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "completedAt": "datetime"
+}
+```
+
+hoặc
+
+```json
+{
+  "success": false,
+  "message": "No enrollment found with this payment ID"
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+
+### 9. Webhook Bài Học Mới
+
+**Endpoint:** `POST /api/v1/webhook/new-lesson`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/webhook/new-lesson`
+
+**Mô tả:** Xử lý webhook khi có bài học mới được thêm vào khóa học.
+
+**Request Body:**
+```json
+{
+  "courseId": "string",
+  "lessonData": {
+    "id": "string",
+    "title": "string",
+    "description": "string"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": boolean,
+  "affectedEnrollments": number
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+
+## Models
+
+### Enrollment
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | ID của enrollment |
+| userId | String | ID của người dùng |
+| courseId | String | ID của khóa học |
+| courseName | String | Tên khóa học |
+| userName | String | Tên người dùng |
+| status | EnrollmentStatus | Trạng thái enrollment |
+| isFree | Boolean | Khóa học có miễn phí không |
+| paymentId | String | ID của giao dịch thanh toán |
+| progress | Float | Tiến độ học tập (0-100) |
+| currentLesson | String | ID của bài học hiện tại |
+| createdAt | DateTime | Thời gian tạo |
+| updatedAt | DateTime | Thời gian cập nhật |
+| completedAt | DateTime | Thời gian hoàn thành |
+
+### EnrollmentStatus
+
+Enum với các giá trị:
+- PENDING: Đang chờ xử lý
+- ACTIVE: Đang hoạt động
+- COMPLETED: Đã hoàn thành
+- CANCELLED: Đã hủy
+- FAILED: Thất bại
+
+### Certificate
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | ID của chứng chỉ |
+| enrollmentId | UUID | ID của enrollment |
+| certificateUrl | String | URL của chứng chỉ |
+| issuedAt | DateTime | Thời gian cấp |
+| updatedAt | DateTime | Thời gian cập nhật |
+
+### UserProgress
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | UUID | ID của tiến trình |
+| enrollmentId | UUID | ID của enrollment |
+| lessonId | String | ID của bài học |
+| isCompleted | Boolean | Bài học đã hoàn thành chưa |
+| progress | Float | Tiến độ học tập (0-100) |
+| updatedAt | DateTime | Thời gian cập nhật |
+
+## Errors
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Bad Request - Dữ liệu không hợp lệ |
+| 401 | Unauthorized - Không có quyền truy cập |
+| 404 | Not Found - Không tìm thấy tài nguyên |
+| 409 | Conflict - Xung đột dữ liệu |
+| 500 | Internal Server Error - Lỗi server |
+
+## Examples
+
+### Tạo Enrollment Mới
+
+**Request:**
+```http
+POST /api/v1
+Content-Type: application/json
+
+{
+  "userId": "USER-5",
+  "courseId": "FREE-COURSE-5",
+  "isFree": true,
+  "courseName": "Python for Beginners",
+  "userName": "Hoàng Văn E"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "userId": "USER-5",
+  "courseId": "FREE-COURSE-5",
+  "courseName": "Python for Beginners",
+  "userName": "Hoàng Văn E",
+  "status": "ACTIVE",
+  "isFree": true,
+  "paymentId": null,
+  "progress": 0,
+  "currentLesson": null,
+  "createdAt": "2023-06-15T10:30:00.000Z",
+  "updatedAt": "2023-06-15T10:30:00.000Z",
+  "completedAt": null
+}
+```
+
+### Kiểm Tra Enrollment
+
+**Request:**
+```http
+GET /api/v1/check/USER-1/FREE-COURSE-1
+```
+
+**Response:**
+```json
+{
+  "enrolled": true
+}
+```

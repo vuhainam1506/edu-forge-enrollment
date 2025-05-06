@@ -1,3 +1,10 @@
+/**
+ * Progress Service
+ * 
+ * Service xử lý logic nghiệp vụ liên quan đến tiến trình học tập.
+ * Quản lý việc theo dõi, cập nhật và kiểm tra tiến trình học tập của người dùng
+ * trong các khóa học, bao gồm cả tiến trình tổng thể và tiến trình chi tiết của từng bài học.
+ */
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -7,7 +14,19 @@ export class ProgressService {
 
   constructor(private prisma: PrismaService) {}
 
-  // Lấy tiến trình học theo enrollment ID
+  /**
+   * Lấy thông tin chi tiết về tiến trình học tập theo enrollment ID
+   * 
+   * @param enrollmentId - ID của enrollment cần lấy thông tin
+   * @returns Thông tin chi tiết về tiến trình học tập, bao gồm:
+   *          - enrollmentId: ID của enrollment
+   *          - progress: Phần trăm hoàn thành khóa học
+   *          - currentLesson: ID của bài học hiện tại
+   *          - lessonId: ID của bài học trong UserProgress
+   *          - isLessonCompleted: Trạng thái hoàn thành của bài học
+   *          - lastUpdated: Thời gian cập nhật gần nhất
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async getProgressByEnrollmentId(enrollmentId: string) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -31,7 +50,14 @@ export class ProgressService {
     };
   }
 
-  // Lấy tiến trình học của một user trong một khóa học
+  /**
+   * Lấy thông tin chi tiết về tiến trình học tập theo user ID và course ID
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns Thông tin chi tiết về tiến trình học tập (cùng cấu trúc với getProgressByEnrollmentId)
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async getProgress(userId: string, courseId: string) {
     // Tìm enrollment trước
     const enrollment = await this.prisma.enrollment.findFirst({
@@ -59,7 +85,18 @@ export class ProgressService {
     };
   }
 
-  // Cập nhật tiến trình học theo enrollment ID
+  /**
+   * Cập nhật tiến trình học tập theo enrollment ID
+   * 
+   * @param enrollmentId - ID của enrollment cần cập nhật
+   * @param updateDto - Dữ liệu cập nhật tiến trình, có thể bao gồm:
+   *                    - progress: Phần trăm hoàn thành khóa học
+   *                    - currentLesson: ID của bài học hiện tại
+   *                    - lessonId: ID của bài học đang được cập nhật
+   *                    - isLessonCompleted: Trạng thái hoàn thành của bài học
+   * @returns Thông tin tiến trình học tập đã được cập nhật
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async updateProgressByEnrollmentId(
     enrollmentId: string,
     updateDto: {
@@ -98,6 +135,7 @@ export class ProgressService {
     // Cập nhật hoặc tạo UserProgress nếu cần
     if (updateDto.lessonId || updateDto.isLessonCompleted !== undefined) {
       if (updatedEnrollment.UserProgress) {
+        // Cập nhật UserProgress hiện có
         await this.prisma.userProgress.update({
           where: { enrollmentId: enrollmentId },
           data: {
@@ -107,6 +145,7 @@ export class ProgressService {
           },
         });
       } else if (updateDto.lessonId) {
+        // Tạo mới UserProgress nếu chưa có
         await this.prisma.userProgress.create({
           data: {
             enrollmentId: enrollmentId,
@@ -122,7 +161,15 @@ export class ProgressService {
     return this.getProgressByEnrollmentId(enrollmentId);
   }
 
-  // Cập nhật tiến trình học theo user ID và course ID
+  /**
+   * Cập nhật tiến trình học tập theo user ID và course ID
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @param updateDto - Dữ liệu cập nhật tiến trình (cùng cấu trúc với updateProgressByEnrollmentId)
+   * @returns Thông tin tiến trình học tập đã được cập nhật
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async updateProgress(
     userId: string, 
     courseId: string, 
@@ -150,7 +197,14 @@ export class ProgressService {
     return this.updateProgressByEnrollmentId(enrollment.id, updateDto);
   }
 
-  // Kiểm tra trạng thái hoàn thành khóa học
+  /**
+   * Kiểm tra trạng thái hoàn thành khóa học theo user ID và course ID
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns true nếu khóa học đã hoàn thành (progress >= 100), ngược lại false
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async checkCourseCompletion(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: {
@@ -166,7 +220,13 @@ export class ProgressService {
     return enrollment.progress >= 100;
   }
 
-  // Kiểm tra trạng thái hoàn thành theo enrollment ID
+  /**
+   * Kiểm tra trạng thái hoàn thành khóa học theo enrollment ID
+   * 
+   * @param enrollmentId - ID của enrollment cần kiểm tra
+   * @returns true nếu khóa học đã hoàn thành (progress >= 100), ngược lại false
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async checkEnrollmentCompletion(enrollmentId: string): Promise<boolean> {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },
@@ -179,7 +239,17 @@ export class ProgressService {
     return enrollment.progress >= 100;
   }
 
-  // Lấy tổng tiến trình của một khóa học
+  /**
+   * Lấy thông tin tổng quan về tiến trình khóa học theo user ID và course ID
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns Thông tin tổng quan về tiến trình, bao gồm:
+   *          - overallProgress: Phần trăm hoàn thành khóa học
+   *          - completed: Trạng thái hoàn thành (true/false)
+   *          - status: Trạng thái của enrollment (PENDING, ACTIVE, COMPLETED, CANCELLED, FAILED)
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async getOverallProgress(userId: string, courseId: string) {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: {
@@ -199,7 +269,13 @@ export class ProgressService {
     };
   }
 
-  // Lấy tổng tiến trình theo enrollment ID
+  /**
+   * Lấy thông tin tổng quan về tiến trình khóa học theo enrollment ID
+   * 
+   * @param enrollmentId - ID của enrollment cần lấy thông tin
+   * @returns Thông tin tổng quan về tiến trình (cùng cấu trúc với getOverallProgress)
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async getOverallProgressByEnrollmentId(enrollmentId: string) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id: enrollmentId },

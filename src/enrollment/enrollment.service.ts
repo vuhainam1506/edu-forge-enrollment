@@ -1,4 +1,10 @@
-// src/enrollment/enrollment.service.ts
+/**
+ * Enrollment Service
+ * 
+ * Service xử lý logic nghiệp vụ liên quan đến việc đăng ký khóa học.
+ * Quản lý việc tạo, truy vấn, cập nhật trạng thái đăng ký, xử lý thanh toán,
+ * quản lý chứng chỉ và gửi thông báo qua email.
+ */
 import { Injectable, ConflictException, NotFoundException, Logger } from "@nestjs/common"
 import { PrismaClient, EnrollmentStatus } from "@prisma/client"
 import { MailerService } from "@nestjs-modules/mailer"
@@ -19,7 +25,20 @@ export class EnrollmentService {
     this.prisma = new PrismaClient()
   }
 
-  // Tạo enrollment mới
+  /**
+   * Tạo enrollment mới cho một người dùng và khóa học
+   * 
+   * @param data - Dữ liệu để tạo enrollment, bao gồm:
+   *               - courseId: ID của khóa học
+   *               - userId: ID của người dùng
+   *               - isFree: Khóa học có miễn phí không
+   *               - courseName: Tên khóa học
+   *               - userName: Tên người dùng
+   *               - paymentId: ID của giao dịch thanh toán
+   *               - status: Trạng thái enrollment
+   * @returns Enrollment đã được tạo
+   * @throws ConflictException - Nếu người dùng đã đăng ký khóa học này
+   */
   async create(data: {
     courseId: string
     userId?: string
@@ -75,7 +94,12 @@ export class EnrollmentService {
     }
   }
 
-  // Lấy enrollments theo user id (tất cả các khóa học mà user đã đăng ký)
+  /**
+   * Lấy danh sách các khóa học mà một người dùng đã đăng ký
+   * 
+   * @param userId - ID của người dùng
+   * @returns Danh sách các enrollment của người dùng, bao gồm thông tin chứng chỉ
+   */
   async findByUserId(userId: string) {
     return this.prisma.enrollment.findMany({
       where: { userId: userId },
@@ -85,7 +109,13 @@ export class EnrollmentService {
     })
   }
 
-  // Lấy chi tiết một enrollment (theo id của enrollment)
+  /**
+   * Lấy thông tin chi tiết của một enrollment theo ID
+   * 
+   * @param id - ID của enrollment cần lấy thông tin
+   * @returns Thông tin chi tiết của enrollment, bao gồm chứng chỉ và tiến trình học tập
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
   async findOneByEnrollmentID(id: string) {
     const enrollment = await this.prisma.enrollment.findUnique({
       where: { id },
@@ -102,7 +132,13 @@ export class EnrollmentService {
     return enrollment
   }
 
-  // Cập nhật trạng thái enrollment
+  /**
+   * Cập nhật trạng thái của một enrollment
+   * 
+   * @param id - ID của enrollment cần cập nhật
+   * @param status - Trạng thái mới của enrollment
+   * @returns Enrollment đã được cập nhật
+   */
   async updateStatus(id: string, status: EnrollmentStatus) {
     const enrollment = await this.findOneByEnrollmentID(id)
 
@@ -116,7 +152,13 @@ export class EnrollmentService {
     })
   }
 
-  // Kiểm tra xem user đã đăng ký khóa học chưa
+  /**
+   * Kiểm tra xem một người dùng đã đăng ký một khóa học cụ thể chưa
+   * 
+   * @param userId - ID của người dùng cần kiểm tra
+   * @param courseId - ID của khóa học cần kiểm tra
+   * @returns true nếu người dùng đã đăng ký và khóa học đang ACTIVE hoặc COMPLETED, ngược lại false
+   */
   async checkEnrollment(userId: string, courseId: string): Promise<boolean> {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: {
@@ -130,6 +172,12 @@ export class EnrollmentService {
     return !!enrollment
   }
 
+  /**
+   * Lấy danh sách tất cả các enrollment với bộ lọc tùy chọn
+   * 
+   * @param filters - Bộ lọc tùy chọn (userId, status)
+   * @returns Danh sách các enrollment thỏa mãn điều kiện lọc
+   */
   async findAll(filters?: {
     userId?: string
     status?: EnrollmentStatus
@@ -146,7 +194,13 @@ export class EnrollmentService {
     })
   }
 
-  // Gửi email khi user đăng ký khóa học thành công
+  /**
+   * Gửi email xác nhận khi người dùng đăng ký khóa học thành công
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @param courseName - Tên khóa học
+   */
   async sendEnrollmentConfirmationEmail(userId: string, courseId: string, courseName?: string): Promise<void> {
     try {
       const resend = new Resend(process.env.RESEND_API_KEY)
@@ -167,7 +221,12 @@ export class EnrollmentService {
     }
   }
 
-  // Xử lý webhook từ Payment Service
+  /**
+   * Xử lý webhook từ Payment Service
+   * 
+   * @param data - Dữ liệu từ payment service
+   * @returns Kết quả xử lý webhook
+   */
   async processPaymentUpdate(data: {
     paymentId: string;
     serviceId: string; // courseId
@@ -212,10 +271,17 @@ export class EnrollmentService {
       });
     } else {
       // Xử lý các trường hợp khác...
+      this.logger.warn(`No enrollment found with payment ID ${data.paymentId}`);
+      return { success: false, message: "No enrollment found with this payment ID" };
     }
   }
 
-  // Các phương thức khác giữ nguyên
+  /**
+   * Thêm bài học mới vào tất cả các enrollment của một khóa học
+   * 
+   * @param lessonData - Dữ liệu của bài học mới
+   * @returns Kết quả thêm bài học mới
+   */
   async addNewLessonToAllEnrollments(lessonData: {
     id: string;
     title: string;
@@ -275,6 +341,14 @@ export class EnrollmentService {
     return { success: true, affectedEnrollments: enrollments.length };
   }
 
+  /**
+   * Gửi thông báo khi có bài học mới được thêm vào khóa học
+   * 
+   * @param userId - ID của người dùng
+   * @param userName - Tên người dùng
+   * @param courseName - Tên khóa học
+   * @param lessonData - Dữ liệu của bài học mới
+   */
   private async sendNewLessonNotification(userId: string, userName: string, courseName: string, lessonData: any) {
     try {
       await this.mailerService.sendMail({
@@ -296,7 +370,14 @@ export class EnrollmentService {
     }
   }
 
-  // Tạo certificate cho enrollment
+  /**
+   * Tạo chứng chỉ cho một enrollment
+   * 
+   * @param enrollmentId - ID của enrollment cần tạo chứng chỉ
+   * @param certificateUrl - URL của chứng chỉ
+   * @returns Chứng chỉ đã được tạo hoặc cập nhật
+   * @throws ConflictException - Nếu enrollment chưa hoàn thành
+   */
   async createCertificate(enrollmentId: string, certificateUrl: string) {
     const enrollment = await this.findOneByEnrollmentID(enrollmentId)
 

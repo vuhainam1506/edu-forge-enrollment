@@ -1,12 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  // Thay đổi global prefix thành /api/v1
+  
+  // Thêm global prefix
   app.setGlobalPrefix('api/v1');
-
+  
   // Enable CORS
   app.enableCors({
     origin: ['*'],
@@ -14,7 +15,8 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Id'],
     credentials: true,
   });
-
-  await app.listen(process.env.PORT ?? 3000);
+  
+  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(process.env.PORT ?? 3003);
 }
 bootstrap();

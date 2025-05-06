@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { EnrollmentModule } from './enrollment/enrollment.module';
+import { ProgressModule } from './progress/progress.module';
 import { PrismaClient } from '@prisma/client';
 import { EnrollmentController } from './enrollment/enrollment.controller';
 import { EnrollmentService } from './enrollment/enrollment.service';
@@ -14,6 +15,7 @@ import { HttpModule } from '@nestjs/axios';
   imports: [
     ConfigModule.forRoot(),
     EnrollmentModule,
+    ProgressModule, // Thêm ProgressModule vào đây
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({

@@ -8,6 +8,7 @@ export class ProgressController {
 
   constructor(private readonly progressService: ProgressService) {}
 
+  // Đặt các route đặc biệt trước route chung
   @Get('completion/:enrollmentId')
   async checkEnrollmentCompletion(
     @Param('enrollmentId') enrollmentId: string,

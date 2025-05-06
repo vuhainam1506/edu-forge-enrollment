@@ -28,14 +28,7 @@ export class EnrollmentService {
   /**
    * Tạo enrollment mới cho một người dùng và khóa học
    * 
-   * @param data - Dữ liệu để tạo enrollment, bao gồm:
-   *               - courseId: ID của khóa học
-   *               - userId: ID của người dùng
-   *               - isFree: Khóa học có miễn phí không
-   *               - courseName: Tên khóa học
-   *               - userName: Tên người dùng
-   *               - paymentId: ID của giao dịch thanh toán
-   *               - status: Trạng thái enrollment
+   * @param data - Dữ liệu để tạo enrollment
    * @returns Enrollment đã được tạo
    * @throws ConflictException - Nếu người dùng đã đăng ký khóa học này
    */
@@ -47,6 +40,8 @@ export class EnrollmentService {
     userName?: string
     paymentId?: string
     status?: EnrollmentStatus
+    lessonId?: string
+    lessonTitle?: string
   }) {
     try {
       // Xác định trạng thái enrollment
@@ -66,6 +61,7 @@ export class EnrollmentService {
         enrollmentStatus = EnrollmentStatus.PENDING
       }
 
+      // Tạo enrollment mới với progress ban đầu là 0
       const enrollment = await this.prisma.enrollment.create({
         data: {
           courseId: data.courseId,
@@ -76,10 +72,33 @@ export class EnrollmentService {
           courseName: data.courseName,
           userName: data.userName,
           paymentId: data.paymentId,
+          currentLesson: data.lessonId,
+          progress: 0, // Thêm progress ban đầu là 0
         },
       })
 
-      // Gửi email xác nhận đăng ký
+      // Tạo UserProgress luôn, bất kể trạng thái enrollment
+      try {
+        if (data.lessonId) {
+          // Sử dụng lessonId được truyền vào
+          await this.prisma.userProgress.create({
+            data: {
+              enrollmentId: enrollment.id,
+              lessonId: data.lessonId,
+              isCompleted: false,
+              progress: 0,
+              updatedAt: new Date(),
+            },
+          });
+        } else {
+          this.logger.warn(`No lessonId provided for enrollment ${enrollment.id}, skipping UserProgress creation`);
+        }
+      } catch (progressError) {
+        this.logger.error(`Failed to create user progress for enrollment ${enrollment.id}`, progressError.stack);
+        // Không throw lỗi, vẫn tiếp tục flow
+      }
+
+      // Gửi email xác nhận đăng ký nếu enrollment đang ACTIVE
       if (enrollmentStatus === EnrollmentStatus.ACTIVE) {
         await this.sendEnrollmentConfirmationEmail(data.userId, data.courseId, data.courseName)
       }
@@ -231,7 +250,8 @@ export class EnrollmentService {
     paymentId: string;
     serviceId: string; // courseId
     status: string;
-    // Các trường khác từ payment service
+    lessonId?: string;
+    metadata?: any;
   }) {
     this.logger.log(`Processing payment update for payment ${data.paymentId}, course ${data.serviceId}, status ${data.status}`);
 
@@ -262,13 +282,43 @@ export class EnrollmentService {
         `Updating enrollment ${existingEnrollment.id} status to ${enrollmentStatus} based on payment ${data.paymentId} status ${data.status}`,
       );
 
-      return this.prisma.enrollment.update({
+      // Lấy lessonId từ webhook hoặc metadata
+      const lessonId = data.lessonId || (data.metadata?.lessonId) || existingEnrollment.currentLesson;
+
+      // Cập nhật trạng thái enrollment
+      const updatedEnrollment = await this.prisma.enrollment.update({
         where: { id: existingEnrollment.id },
         data: {
           status: enrollmentStatus,
           updatedAt: new Date(),
+          ...(lessonId ? { currentLesson: lessonId } : {}),
+          // Đảm bảo progress có giá trị
+          progress: existingEnrollment.progress || 0,
         },
       });
+
+      // Tạo UserProgress nếu chưa có và có lessonId
+      if (enrollmentStatus === EnrollmentStatus.ACTIVE && lessonId) {
+        // Kiểm tra xem đã có UserProgress chưa
+        const existingProgress = await this.prisma.userProgress.findFirst({
+          where: { enrollmentId: existingEnrollment.id },
+        });
+
+        if (!existingProgress) {
+          // Tạo UserProgress mới
+          await this.prisma.userProgress.create({
+            data: {
+              enrollmentId: existingEnrollment.id,
+              lessonId: lessonId,
+              isCompleted: false,
+              progress: 0,
+              updatedAt: new Date(),
+            },
+          });
+        }
+      }
+
+      return updatedEnrollment;
     } else {
       // Xử lý các trường hợp khác...
       this.logger.warn(`No enrollment found with payment ID ${data.paymentId}`);
@@ -303,6 +353,17 @@ export class EnrollmentService {
     // Cập nhật progress cho mỗi enrollment
     for (const enrollment of enrollments) {
       try {
+        // Cập nhật enrollment với currentLesson mới
+        await this.prisma.enrollment.update({
+          where: { id: enrollment.id },
+          data: {
+            currentLesson: lessonData.id,
+            updatedAt: new Date(),
+            // Đảm bảo progress có giá trị
+            progress: enrollment.progress || 0,
+          },
+        });
+
         // Kiểm tra xem đã có UserProgress chưa
         const existingProgress = await this.prisma.userProgress.findUnique({
           where: { enrollmentId: enrollment.id },

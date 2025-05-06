@@ -73,7 +73,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"FREE-COURSE-5\",\n    \"isFree\": true,\n    \"courseName\": \"Python for Beginners\",\n    \"userName\": \"Hoàng Văn E\"\n}"
+              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"FREE-COURSE-5\",\n    \"isFree\": true,\n    \"courseName\": \"Python for Beginners\",\n    \"userName\": \"Hoàng Văn E\",\n    \"lessonId\": \"LESSON-PY-001\",\n    \"lessonTitle\": \"Introduction to Python\"\n}"
             },
             "description": "Create a new free enrollment"
           },
@@ -96,7 +96,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"PAID-COURSE-6\",\n    \"isFree\": false,\n    \"courseName\": \"Machine Learning with Python\",\n    \"userName\": \"Hoàng Văn E\"\n}"
+              "raw": "{\n    \"userId\": \"USER-5\",\n    \"courseId\": \"PAID-COURSE-6\",\n    \"isFree\": false,\n    \"courseName\": \"Machine Learning with Python\",\n    \"userName\": \"Hoàng Văn E\",\n    \"lessonId\": \"LESSON-ML-001\",\n    \"lessonTitle\": \"Introduction to Machine Learning\"\n}"
             },
             "description": "Create a new paid enrollment"
           },
@@ -196,7 +196,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"serviceId\": \"{{enrollment_id}}\",\n    \"serviceType\": \"COURSE_ENROLLMENT\",\n    \"status\": \"COMPLETED\",\n    \"paymentId\": \"PAYMENT-NEW-001\"\n}"
+              "raw": "{\n    \"serviceId\": \"{{enrollment_id}}\",\n    \"serviceType\": \"COURSE_ENROLLMENT\",\n    \"status\": \"COMPLETED\",\n    \"paymentId\": \"PAYMENT-NEW-001\",\n    \"lessonId\": \"LESSON-JS-001\",\n    \"metadata\": {\n        \"courseId\": \"PAID-COURSE-1\",\n        \"userId\": \"USER-1\",\n        \"lessonId\": \"LESSON-JS-001\",\n        \"lessonTitle\": \"Introduction to JavaScript\"\n    }\n}"
             },
             "description": "Handle payment webhook to update enrollment status"
           },

@@ -1,0 +1,527 @@
+{
+  "info": {
+    "name": "Enrollment & Progress API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Enrollment Flow",
+      "item": [
+        {
+          "name": "Create Free Enrollment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/enrollment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "enrollment"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\": \"{{test_user_id}}\",\n    \"courseId\": \"{{test_course_id}}\",\n    \"isFree\": true,\n    \"courseName\": \"JavaScript Fundamentals\",\n    \"userName\": \"Nguyễn Văn Test\",\n    \"lessonId\": \"LESSON-JS-001\",\n    \"lessonTitle\": \"Introduction to JavaScript\"\n}"
+            },
+            "description": "Tạo một enrollment miễn phí mới để sử dụng trong các test tiếp theo"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Enrollment by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/enrollment/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "enrollment", "{{test_enrollment_id}}"]
+            },
+            "description": "Lấy thông tin enrollment vừa tạo"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Enrollment data is correct\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.id).to.eql(pm.environment.get(\"test_enrollment_id\"));",
+                  "    pm.expect(responseJson.userId).to.eql(pm.environment.get(\"test_user_id\"));",
+                  "    pm.expect(responseJson.courseId).to.eql(pm.environment.get(\"test_course_id\"));",
+                  "    pm.expect(responseJson.status).to.eql(\"ACTIVE\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Progress Flow",
+      "item": [
+        {
+          "name": "Get Initial Progress",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_enrollment_id}}"]
+            },
+            "description": "Lấy thông tin tiến trình ban đầu của enrollment"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Initial progress should be 0\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.enrollmentId).to.eql(pm.environment.get(\"test_enrollment_id\"));",
+                  "    pm.expect(responseJson.progress).to.eql(0);",
+                  "    pm.expect(responseJson.isLessonCompleted).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_enrollment_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"progress\": 25,\n    \"currentLesson\": \"LESSON-JS-001\",\n    \"lessonId\": \"LESSON-JS-001\",\n    \"isLessonCompleted\": false\n}"
+            },
+            "description": "Cập nhật tiến trình học tập"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Progress updated correctly\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.enrollmentId).to.eql(pm.environment.get(\"test_enrollment_id\"));",
+                  "    pm.expect(responseJson.progress).to.eql(25);",
+                  "    pm.expect(responseJson.currentLesson).to.eql(\"LESSON-JS-001\");",
+                  "    pm.expect(responseJson.lessonId).to.eql(\"LESSON-JS-001\");",
+                  "    pm.expect(responseJson.isLessonCompleted).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete Lesson",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_enrollment_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"progress\": 50,\n    \"currentLesson\": \"LESSON-JS-002\",\n    \"lessonId\": \"LESSON-JS-001\",\n    \"isLessonCompleted\": true\n}"
+            },
+            "description": "Hoàn thành bài học đầu tiên và chuyển sang bài học tiếp theo"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Lesson completed and moved to next lesson\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.progress).to.eql(50);",
+                  "    pm.expect(responseJson.currentLesson).to.eql(\"LESSON-JS-002\");",
+                  "    pm.expect(responseJson.lessonId).to.eql(\"LESSON-JS-001\");",
+                  "    pm.expect(responseJson.isLessonCompleted).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Progress by User and Course",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_user_id}}/{{test_course_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_user_id}}", "{{test_course_id}}"]
+            },
+            "description": "Lấy tiến trình học tập bằng User ID và Course ID"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Progress data matches with previous update\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.enrollmentId).to.eql(pm.environment.get(\"test_enrollment_id\"));",
+                  "    pm.expect(responseJson.progress).to.eql(50);",
+                  "    pm.expect(responseJson.currentLesson).to.eql(\"LESSON-JS-002\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check Course Completion",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_user_id}}/{{test_course_id}}/check-completion",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_user_id}}", "{{test_course_id}}", "check-completion"]
+            },
+            "description": "Kiểm tra xem khóa học đã hoàn thành chưa"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Course is not completed yet\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.completed).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Overall Progress",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_user_id}}/{{test_course_id}}/overall",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_user_id}}", "{{test_course_id}}", "overall"]
+            },
+            "description": "Lấy thông tin tổng quan về tiến trình học tập"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Overall progress data is correct\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.overallProgress).to.eql(50);",
+                  "    pm.expect(responseJson.completed).to.eql(false);",
+                  "    pm.expect(responseJson.status).to.eql(\"ACTIVE\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_enrollment_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"progress\": 100,\n    \"currentLesson\": \"LESSON-JS-003\",\n    \"lessonId\": \"LESSON-JS-003\",\n    \"isLessonCompleted\": true\n}"
+            },
+            "description": "Hoàn thành toàn bộ khóa học"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Course is now completed\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.progress).to.eql(100);",
+                  "    pm.expect(responseJson.isLessonCompleted).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Verify Course Completion",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/completion/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "completion", "{{test_enrollment_id}}"]
+            },
+            "description": "Xác nhận khóa học đã hoàn thành"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Course is now completed\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.completed).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Error Handling Tests",
+      "item": [
+        {
+          "name": "Get Non-existent Enrollment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/enrollment/non-existent-id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "enrollment", "non-existent-id"]
+            },
+            "description": "Thử lấy thông tin enrollment không tồn tại"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is returned\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    pm.expect(responseJson.message).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Progress for Non-existent Enrollment",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/non-existent-id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "non-existent-id"]
+            },
+            "description": "Thử lấy tiến trình của enrollment không tồn tại"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is returned\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "    pm.expect(responseJson.message).to.include('not found');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Progress with Invalid Data",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/progress/{{test_enrollment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "progress", "{{test_enrollment_id}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"progress\": -10,\n    \"currentLesson\": \"\",\n    \"lessonId\": \"\",\n    \"isLessonCompleted\": \"invalid\"\n}"
+            },
+            "description": "Thử cập nhật tiến trình với dữ liệu không hợp lệ"
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Error message is returned\", function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://enrollment.eduforge.io.vn"
+    },
+    {
+      "key": "test_user_id",
+      "value": "TEST-USER-001"
+    },
+    {
+      "key": "test_course_id",
+      "value": "TEST-COURSE-JS-001"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Thiết lập các biến môi trường nếu chưa có",
+          "if (!pm.environment.get(\"test_user_id\")) {",
+          "    pm.environment.set(\"test_user_id\", \"TEST-USER-\" + new Date().getTime());",
+          "}",
+          "",
+          "if (!pm.environment.get(\"test_course_id\")) {",
+          "    pm.environment.set(\"test_course_id\", \"TEST-COURSE-JS-\" + new Date().getTime());",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test assertions",
+          "pm.test(\"Response time is acceptable\", function() {",
+          "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+          "});",
+          "",
+          "pm.test(\"Response has JSON body\", function() {",
+          "    if (pm.response.headers.get(\"Content-Type\").includes(\"application/json\")) {",
+          "        pm.response.to.be.json;",
+          "    }",
+          "});"
+        ]
+      }
+    }
+  ]
+}

@@ -5,9 +5,9 @@ http://localhost:3003/api/v1
 
 ## API Endpoints
 
-### 1. Lấy Tiến Trình Theo Enrollment ID
+### 1. Lấy Tiến Trình Học Tập (Get Initial Progress)
 
-**Endpoint:** GET /api/v1/progress/:enrollmentId
+**Endpoint:** GET /progress/:enrollmentId
 **Path đầy đủ:** http://localhost:3003/api/v1/progress/:enrollmentId
 **Mô tả:** Lấy thông tin tiến trình học tập của một enrollment cụ thể.
 **Khi nào gọi:** Khi cần hiển thị tiến độ học tập của người dùng trong một khóa học.
@@ -29,9 +29,9 @@ http://localhost:3003/api/v1
 - 200: Thành công
 - 404: Không tìm thấy enrollment
 
-### 2. Cập Nhật Tiến Trình Theo Enrollment ID
+### 2. Cập Nhật Tiến Trình (Update Progress)
 
-**Endpoint:** PUT /api/v1/progress/:enrollmentId
+**Endpoint:** PUT /progress/:enrollmentId
 **Path đầy đủ:** http://localhost:3003/api/v1/progress/:enrollmentId
 **Mô tả:** Cập nhật tiến trình học tập của một enrollment.
 **Khi nào gọi:** Khi người dùng hoàn thành một bài học hoặc một phần của khóa học.
@@ -62,28 +62,9 @@ http://localhost:3003/api/v1
 - 404: Không tìm thấy enrollment
 - 400: Dữ liệu không hợp lệ
 
-### 3. Kiểm Tra Hoàn Thành Khóa Học
+### 3. Lấy Tổng Quan Tiến Trình (Get Overall Progress)
 
-**Endpoint:** GET /api/v1/progress/completion/:enrollmentId
-**Path đầy đủ:** http://localhost:3003/api/v1/progress/completion/:enrollmentId
-**Mô tả:** Kiểm tra xem một khóa học đã được hoàn thành chưa.
-**Khi nào gọi:** Khi cần xác định liệu người dùng đã hoàn thành khóa học để cấp chứng chỉ.
-
-**Path Parameters:**
-- enrollmentId: ID của enrollment
-
-**Response:**
-{
-  "completed": true
-}
-
-**Status Codes:**
-- 200: Thành công
-- 404: Không tìm thấy enrollment
-
-### 4. Lấy Tổng Quan Tiến Trình
-
-**Endpoint:** GET /api/v1/progress/overall/:enrollmentId
+**Endpoint:** GET /progress/overall/:enrollmentId
 **Path đầy đủ:** http://localhost:3003/api/v1/progress/overall/:enrollmentId
 **Mô tả:** Lấy thông tin tổng quan về tiến trình học tập.
 **Khi nào gọi:** Khi cần hiển thị tổng quan về tiến độ học tập và trạng thái của khóa học.
@@ -102,75 +83,15 @@ http://localhost:3003/api/v1
 - 200: Thành công
 - 404: Không tìm thấy enrollment
 
-### 5. Lấy Tiến Trình Theo User ID và Course ID
+### 4. Kiểm Tra Hoàn Thành Khóa Học (Verify Course Completion)
 
-**Endpoint:** GET /api/v1/progress/:userId/:courseId
-**Path đầy đủ:** http://localhost:3003/api/v1/progress/:userId/:courseId
-**Mô tả:** Lấy thông tin tiến trình học tập dựa trên ID người dùng và ID khóa học.
-**Khi nào gọi:** Khi cần hiển thị tiến độ học tập mà chỉ có thông tin về người dùng và khóa học.
-
-**Path Parameters:**
-- userId: ID của người dùng
-- courseId: ID của khóa học
-
-**Response:**
-{
-  "enrollmentId": "uuid",
-  "progress": 75,
-  "currentLesson": "LESSON-123",
-  "lessonId": "LESSON-123",
-  "isLessonCompleted": true,
-  "lastUpdated": "2023-06-15T10:30:00.000Z"
-}
-
-**Status Codes:**
-- 200: Thành công
-- 404: Không tìm thấy enrollment
-
-### 6. Cập Nhật Tiến Trình Theo User ID và Course ID
-
-**Endpoint:** PUT /api/v1/progress/:userId/:courseId
-**Path đầy đủ:** http://localhost:3003/api/v1/progress/:userId/:courseId
-**Mô tả:** Cập nhật tiến trình học tập dựa trên ID người dùng và ID khóa học.
-**Khi nào gọi:** Khi cần cập nhật tiến độ học tập mà chỉ có thông tin về người dùng và khóa học.
-
-**Path Parameters:**
-- userId: ID của người dùng
-- courseId: ID của khóa học
-
-**Request Body:**
-{
-  "progress": 75,
-  "currentLesson": "LESSON-123",
-  "lessonId": "LESSON-123",
-  "isLessonCompleted": true
-}
-
-**Response:**
-{
-  "enrollmentId": "uuid",
-  "progress": 75,
-  "currentLesson": "LESSON-123",
-  "lessonId": "LESSON-123",
-  "isLessonCompleted": true,
-  "lastUpdated": "2023-06-15T10:30:00.000Z"
-}
-
-**Status Codes:**
-- 200: Thành công
-- 404: Không tìm thấy enrollment
-- 400: Dữ liệu không hợp lệ
-
-### 7. Kiểm Tra Hoàn Thành Khóa Học Theo User ID và Course ID
-
-**Endpoint:** GET /api/v1/progress/:userId/:courseId/check-completion
-**Path đầy đủ:** http://localhost:3003/api/v1/progress/:userId/:courseId/check-completion
-**Mô tả:** Kiểm tra xem một khóa học đã được hoàn thành bởi người dùng cụ thể chưa.
+**Endpoint:** GET /progress/completion/:enrollmentId
+**Path đầy đủ:** http://localhost:3003/api/v1/progress/completion/:enrollmentId
+**Mô tả:** Kiểm tra xem một khóa học đã được hoàn thành chưa.
 **Khi nào gọi:** Khi cần xác định liệu người dùng đã hoàn thành khóa học để cấp chứng chỉ.
 
 **Path Parameters:**
-- userId: ID của người dùng
-- courseId: ID của khóa học
+- enrollmentId: ID của enrollment
 
 **Response:**
 {
@@ -181,24 +102,93 @@ http://localhost:3003/api/v1
 - 200: Thành công
 - 404: Không tìm thấy enrollment
 
-### 8. Lấy Tổng Quan Tiến Trình Theo User ID và Course ID
+## Models
 
-**Endpoint:** GET /api/v1/progress/:userId/:courseId/overall
-**Path đầy đủ:** http://localhost:3003/api/v1/progress/:userId/:courseId/overall
-**Mô tả:** Lấy thông tin tổng quan về tiến trình học tập của người dùng trong một khóa học.
-**Khi nào gọi:** Khi cần hiển thị tổng quan về tiến độ học tập và trạng thái của khóa học.
+### Progress
 
-**Path Parameters:**
-- userId: ID của người dùng
-- courseId: ID của khóa học
+| Field | Type | Description |
+|-------|------|-------------|
+| enrollmentId | UUID | ID của enrollment |
+| progress | Number | Phần trăm hoàn thành (0-100) |
+| currentLesson | String | ID của bài học hiện tại |
+| lessonId | String | ID của bài học đang được cập nhật |
+| isLessonCompleted | Boolean | Trạng thái hoàn thành của bài học |
+| lastUpdated | DateTime | Thời gian cập nhật gần nhất |
+
+## Examples
+
+### Lấy Tiến Trình Học Tập
+
+**Request:**
+```http
+GET /api/v1/progress/123e4567-e89b-12d3-a456-426614174000
+```
 
 **Response:**
+```json
 {
-  "overallProgress": 75,
+  "enrollmentId": "123e4567-e89b-12d3-a456-426614174000",
+  "progress": 75,
+  "currentLesson": "LESSON-123",
+  "lessonId": "LESSON-123",
+  "isLessonCompleted": true,
+  "lastUpdated": "2023-06-15T10:30:00.000Z"
+}
+```
+
+### Cập Nhật Tiến Trình
+
+**Request:**
+```http
+PUT /api/v1/progress/123e4567-e89b-12d3-a456-426614174000
+Content-Type: application/json
+
+{
+  "progress": 80,
+  "currentLesson": "LESSON-124",
+  "lessonId": "LESSON-123",
+  "isLessonCompleted": true
+}
+```
+
+**Response:**
+```json
+{
+  "enrollmentId": "123e4567-e89b-12d3-a456-426614174000",
+  "progress": 80,
+  "currentLesson": "LESSON-124",
+  "lessonId": "LESSON-123",
+  "isLessonCompleted": true,
+  "lastUpdated": "2023-06-15T11:45:00.000Z"
+}
+```
+
+### Lấy Tổng Quan Tiến Trình
+
+**Request:**
+```http
+GET /api/v1/progress/overall/123e4567-e89b-12d3-a456-426614174000
+```
+
+**Response:**
+```json
+{
+  "overallProgress": 80,
   "completed": false,
   "status": "ACTIVE"
 }
+```
 
-**Status Codes:**
-- 200: Thành công
-- 404: Không tìm thấy enrollment
+### Kiểm Tra Hoàn Thành Khóa Học
+
+**Request:**
+```http
+GET /api/v1/progress/completion/123e4567-e89b-12d3-a456-426614174000
+```
+
+**Response:**
+```json
+{
+  "completed": false
+}
+```

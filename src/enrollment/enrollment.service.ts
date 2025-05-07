@@ -470,5 +470,32 @@ export class EnrollmentService {
       },
     })
   }
+
+  /**
+   * Lấy thông tin enrollment theo userId và courseId
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns Thông tin chi tiết của enrollment, bao gồm chứng chỉ và tiến trình học tập
+   * @throws NotFoundException - Nếu không tìm thấy enrollment
+   */
+  async findByUserAndCourse(userId: string, courseId: string) {
+    const enrollment = await this.prisma.enrollment.findFirst({
+      where: { 
+        userId: userId,
+        courseId: courseId 
+      },
+      include: {
+        Certificate: true,
+        UserProgress: true,
+      },
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException(`Enrollment for user ${userId} in course ${courseId} not found`);
+    }
+
+    return enrollment;
+  }
 }
 

@@ -201,13 +201,13 @@ export class EnrollmentController {
   /**
    * Lấy thông tin enrollment theo userId và courseId
    * 
-   * @param courseId - ID của khóa học (từ query parameter)
+   * @param courseId - ID của khóa học (từ path parameter)
    * @param userId - ID của người dùng (từ header)
    * @returns Thông tin chi tiết của enrollment
    */
-  @Get('find')
+  @Get('find/:courseId')
   async findByUserAndCourse(
-    @Query('courseId') courseId: string,
+    @Param('courseId') courseId: string,
     @Headers('X-User-Id') userId: string,
   ) {
     this.logger.log(`Getting enrollment for user ${userId} in course ${courseId}`);

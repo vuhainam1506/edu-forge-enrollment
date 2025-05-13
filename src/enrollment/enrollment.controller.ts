@@ -183,6 +183,8 @@ export class EnrollmentController {
       isFree?: boolean;
       lessonId?: string;
       lessonTitle?: string;
+      paymentId?: string;
+      status?: EnrollmentStatus;
     },
     @Headers('X-User-Id') requestUserId?: string,
   ) {
@@ -195,6 +197,8 @@ export class EnrollmentController {
       isFree: data.isFree,
       lessonId: data.lessonId,
       lessonTitle: data.lessonTitle,
+      paymentId: data.paymentId,
+      status: data.status,
     });
   }
 

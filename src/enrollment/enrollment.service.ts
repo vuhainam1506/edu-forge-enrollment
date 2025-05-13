@@ -67,7 +67,7 @@ export class EnrollmentService {
           courseId: data.courseId,
           userId: data.userId,
           isFree: data.isFree || false,
-          status: enrollmentStatus,
+          status: data.status || enrollmentStatus,
           updatedAt: new Date(),
           courseName: data.courseName,
           userName: data.userName,

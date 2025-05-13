@@ -44,6 +44,7 @@ export class EnrollmentService {
     lessonTitle?: string
   }) {
     try {
+      console.log("Creating enrollment with data:", data);
       // Xác định trạng thái enrollment
       let enrollmentStatus: EnrollmentStatus
 
@@ -67,7 +68,7 @@ export class EnrollmentService {
           courseId: data.courseId,
           userId: data.userId,
           isFree: data.isFree || false,
-          status: data.status || enrollmentStatus,
+          status: enrollmentStatus,
           updatedAt: new Date(),
           courseName: data.courseName,
           userName: data.userName,

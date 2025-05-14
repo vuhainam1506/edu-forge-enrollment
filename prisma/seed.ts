@@ -29,7 +29,12 @@ async function main() {
       updatedAt: new Date(),
       Certificate: {
         create: {
-          certificateUrl: '/certificates/cert-js-basic-001.pdf',
+          metadata: {
+            userId: 'user-001',
+            courseId: 'course-js-basics-001',
+            courseName: 'Lập Trình JavaScript Cơ Bản',
+            userName: 'Nguyễn Văn A'
+          },
           issuedAt: new Date(),
           updatedAt: new Date(),
         },
@@ -165,7 +170,12 @@ async function main() {
       updatedAt: new Date(),
       Certificate: {
         create: {
-          certificateUrl: '/certificates/cert-fullstack-web-001.pdf',
+          metadata: {
+            userId: 'user-004',
+            courseId: 'course-fullstack-001',
+            courseName: 'Full Stack Web Development',
+            userName: 'Phạm Thị D'
+          },
           issuedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000), // 6 days ago
           updatedAt: new Date(),
         },

@@ -458,7 +458,7 @@ export class EnrollmentService {
       courseId: enrollment.courseId,
       courseName: enrollment.courseName,
       userName: enrollment.userName,
-      ...certificateData.metadata
+      ...(certificateData.metadata || {})
     };
 
     // Kiểm tra xem đã có certificate chưa
@@ -631,10 +631,11 @@ export class EnrollmentService {
       throw new NotFoundException(`Certificate ${certificateId} not found`);
     }
 
-    // Merge metadata hiện tại với metadata mới
+    // Xử lý metadata một cách an toàn
+    const currentMetadata = certificate.metadata as Record<string, any>;
     const updatedMetadata = {
-      ...certificate.metadata,
-      ...certificateData.metadata
+      ...currentMetadata,
+      ...(certificateData.metadata || {})
     };
 
     return this.prisma.certificate.update({

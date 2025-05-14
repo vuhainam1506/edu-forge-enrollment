@@ -436,40 +436,56 @@ export class EnrollmentService {
    * Tạo chứng chỉ cho một enrollment
    * 
    * @param enrollmentId - ID của enrollment cần tạo chứng chỉ
-   * @param certificateUrl - URL của chứng chỉ
+   * @param certificateData - Dữ liệu chứng chỉ
    * @returns Chứng chỉ đã được tạo hoặc cập nhật
    * @throws ConflictException - Nếu enrollment chưa hoàn thành
    */
-  async createCertificate(enrollmentId: string, certificateUrl: string) {
-    const enrollment = await this.findOneByEnrollmentID(enrollmentId)
+  async createCertificate(
+    enrollmentId: string, 
+    certificateData: {
+      metadata: Record<string, any>;
+    }
+  ) {
+    const enrollment = await this.findOneByEnrollmentID(enrollmentId);
 
     if (enrollment.status !== EnrollmentStatus.COMPLETED) {
-      throw new ConflictException("Cannot create certificate for incomplete enrollment")
+      throw new ConflictException("Cannot create certificate for incomplete enrollment");
     }
+
+    // Đảm bảo metadata chứa thông tin cần thiết
+    const metadata = {
+      userId: enrollment.userId,
+      courseId: enrollment.courseId,
+      courseName: enrollment.courseName,
+      userName: enrollment.userName,
+      ...certificateData.metadata
+    };
 
     // Kiểm tra xem đã có certificate chưa
     const existingCertificate = await this.prisma.certificate.findFirst({
       where: { enrollmentId: enrollmentId },
-    })
+    });
 
     if (existingCertificate) {
+      // Cập nhật certificate nếu đã tồn tại
       return this.prisma.certificate.update({
         where: { id: existingCertificate.id },
         data: {
-          certificateUrl: certificateUrl,
+          metadata,
           updatedAt: new Date(),
         },
-      })
+      });
     }
 
+    // Tạo certificate mới nếu chưa tồn tại
     return this.prisma.certificate.create({
       data: {
         enrollmentId: enrollmentId,
-        certificateUrl: certificateUrl,
+        metadata,
         issuedAt: new Date(),
         updatedAt: new Date(),
       },
-    })
+    });
   }
 
   /**
@@ -497,6 +513,137 @@ export class EnrollmentService {
     }
 
     return enrollment;
+  }
+
+  /**
+   * Lấy tất cả chứng chỉ của một người dùng
+   * 
+   * @param userId - ID của người dùng
+   * @returns Danh sách chứng chỉ của người dùng kèm thông tin khóa học
+   */
+  async getUserCertificates(userId: string) {
+    const enrollmentsWithCertificates = await this.prisma.enrollment.findMany({
+      where: {
+        userId: userId,
+        status: EnrollmentStatus.COMPLETED,
+        Certificate: {
+          isNot: null
+        }
+      },
+      include: {
+        Certificate: true
+      }
+    });
+
+    return enrollmentsWithCertificates.map(enrollment => ({
+      certificateId: enrollment.Certificate.id,
+      enrollmentId: enrollment.id,
+      courseId: enrollment.courseId,
+      courseName: enrollment.courseName,
+      metadata: enrollment.Certificate.metadata,
+      issuedAt: enrollment.Certificate.issuedAt
+    }));
+  }
+
+  /**
+   * Lấy chứng chỉ của một người dùng cho một khóa học cụ thể
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns Chứng chỉ của người dùng cho khóa học
+   * @throws NotFoundException - Nếu không tìm thấy chứng chỉ
+   */
+  async getUserCourseCertificate(userId: string, courseId: string) {
+    const enrollment = await this.prisma.enrollment.findFirst({
+      where: {
+        userId: userId,
+        courseId: courseId,
+        status: EnrollmentStatus.COMPLETED
+      },
+      include: {
+        Certificate: true
+      }
+    });
+
+    if (!enrollment || !enrollment.Certificate) {
+      throw new NotFoundException(`Certificate for user ${userId} and course ${courseId} not found`);
+    }
+
+    return {
+      certificateId: enrollment.Certificate.id,
+      enrollmentId: enrollment.id,
+      courseId: enrollment.courseId,
+      courseName: enrollment.courseName,
+      metadata: enrollment.Certificate.metadata,
+      issuedAt: enrollment.Certificate.issuedAt
+    };
+  }
+
+  /**
+   * Xác minh tính hợp lệ của một chứng chỉ
+   * 
+   * @param certificateId - ID của chứng chỉ cần xác minh
+   * @returns Thông tin xác minh chứng chỉ
+   * @throws NotFoundException - Nếu không tìm thấy chứng chỉ
+   */
+  async verifyCertificate(certificateId: string) {
+    const certificate = await this.prisma.certificate.findUnique({
+      where: { id: certificateId },
+      include: {
+        Enrollment: true
+      }
+    });
+
+    if (!certificate) {
+      throw new NotFoundException(`Certificate ${certificateId} not found`);
+    }
+
+    return {
+      isValid: true,
+      certificateId: certificate.id,
+      courseId: certificate.Enrollment.courseId,
+      courseName: certificate.Enrollment.courseName,
+      userName: certificate.Enrollment.userName,
+      metadata: certificate.metadata,
+      issuedAt: certificate.issuedAt
+    };
+  }
+
+  /**
+   * Cập nhật thông tin chứng chỉ
+   * 
+   * @param certificateId - ID của chứng chỉ cần cập nhật
+   * @param certificateData - Dữ liệu cập nhật cho chứng chỉ
+   * @returns Chứng chỉ đã được cập nhật
+   * @throws NotFoundException - Nếu không tìm thấy chứng chỉ
+   */
+  async updateCertificate(
+    certificateId: string, 
+    certificateData: {
+      metadata?: Record<string, any>;
+    }
+  ) {
+    const certificate = await this.prisma.certificate.findUnique({
+      where: { id: certificateId }
+    });
+
+    if (!certificate) {
+      throw new NotFoundException(`Certificate ${certificateId} not found`);
+    }
+
+    // Merge metadata hiện tại với metadata mới
+    const updatedMetadata = {
+      ...certificate.metadata,
+      ...certificateData.metadata
+    };
+
+    return this.prisma.certificate.update({
+      where: { id: certificateId },
+      data: {
+        metadata: updatedMetadata,
+        updatedAt: new Date()
+      }
+    });
   }
 }
 

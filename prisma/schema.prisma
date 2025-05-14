@@ -8,14 +8,12 @@ datasource db {
 }
 
 model Certificate {
-  id             String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollmentId   String     @unique(map: "unique_enrollment_certificate") @db.Uuid
-  certificateUrl String     @db.VarChar(255)
-  issuedAt       DateTime   @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime   @default(now()) @db.Timestamp(6)
-  Enrollment     Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_enrollment")
-
-  @@index([enrollmentId], map: "certificates_enrollmentId_idx")
+  id           String     @id @default(uuid())
+  enrollmentId String     @unique
+  metadata     Json       // Chứa thông tin id của user, course và các thông tin khác
+  issuedAt     DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  Enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 }
 
 model Enrollment {
@@ -60,3 +58,5 @@ enum EnrollmentStatus {
   CANCELLED
   FAILED
 }
+
+

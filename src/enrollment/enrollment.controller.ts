@@ -149,21 +149,24 @@ export class EnrollmentController {
   }
 
   /**
-   * Tạo chứng chỉ cho một enrollment
+   * Tạo chứng chỉ cho một enrollment đã hoàn thành
    * 
    * @param id - ID của enrollment cần tạo chứng chỉ
-   * @param certificateUrl - URL của chứng chỉ
+   * @param certificateData - Dữ liệu chứng chỉ (metadata)
    * @param userId - ID của người dùng thực hiện request (từ header)
    * @returns Chứng chỉ đã được tạo
    */
   @Post(':id/certificate')
+  @HttpCode(HttpStatus.CREATED)
   async createCertificate(
     @Param('id') id: string,
-    @Body('certificateUrl') certificateUrl: string,
+    @Body() certificateData: {
+      metadata: Record<string, any>;
+    },
     @Headers('X-User-Id') userId?: string,
   ) {
     this.logger.log(`Creating certificate for enrollment ${id}`);
-    return this.enrollmentService.createCertificate(id, certificateUrl);
+    return this.enrollmentService.createCertificate(id, certificateData);
   }
 
   /**
@@ -216,5 +219,71 @@ export class EnrollmentController {
   ) {
     this.logger.log(`Getting enrollment for user ${userId} in course ${courseId}`);
     return this.enrollmentService.findByUserAndCourse(userId, courseId);
+  }
+
+  /**
+   * Lấy tất cả chứng chỉ của một người dùng
+   * 
+   * @param userId - ID của người dùng
+   * @returns Danh sách chứng chỉ của người dùng
+   */
+  @Get('user/:userId/certificates')
+  async getUserCertificates(
+    @Param('userId') userId: string,
+    @Headers('X-User-Id') requestUserId?: string,
+  ) {
+    this.logger.log(`Getting certificates for user ${userId}`);
+    return this.enrollmentService.getUserCertificates(userId);
+  }
+
+  /**
+   * Lấy chứng chỉ của một người dùng cho một khóa học cụ thể
+   * 
+   * @param userId - ID của người dùng
+   * @param courseId - ID của khóa học
+   * @returns Chứng chỉ của người dùng cho khóa học
+   */
+  @Get('user/:userId/course/:courseId/certificate')
+  async getUserCourseCertificate(
+    @Param('userId') userId: string,
+    @Param('courseId') courseId: string,
+    @Headers('X-User-Id') requestUserId?: string,
+  ) {
+    this.logger.log(`Getting certificate for user ${userId} and course ${courseId}`);
+    return this.enrollmentService.getUserCourseCertificate(userId, courseId);
+  }
+
+  /**
+   * Xác minh tính hợp lệ của một chứng chỉ
+   * 
+   * @param certificateId - ID của chứng chỉ cần xác minh
+   * @returns Thông tin xác minh chứng chỉ
+   */
+  @Get('certificate/:certificateId/verify')
+  async verifyCertificate(
+    @Param('certificateId') certificateId: string,
+  ) {
+    this.logger.log(`Verifying certificate ${certificateId}`);
+    return this.enrollmentService.verifyCertificate(certificateId);
+  }
+
+  /**
+   * Cập nhật thông tin chứng chỉ
+   * 
+   * @param certificateId - ID của chứng chỉ cần cập nhật
+   * @param certificateData - Dữ liệu cập nhật cho chứng chỉ
+   * @param userId - ID của người dùng thực hiện request (từ header)
+   * @returns Chứng chỉ đã được cập nhật
+   */
+  @Put('certificate/:certificateId')
+  async updateCertificate(
+    @Param('certificateId') certificateId: string,
+    @Body() certificateData: {
+      metadata?: Record<string, any>;
+    },
+    @Headers('X-User-Id') userId?: string,
+  ) {
+    this.logger.log(`Updating certificate ${certificateId}`);
+    return this.enrollmentService.updateCertificate(certificateId, certificateData);
   }
   }

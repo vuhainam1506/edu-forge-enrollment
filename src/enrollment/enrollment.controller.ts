@@ -69,7 +69,7 @@ export class EnrollmentController {
    * 
    * @returns Thông tin thống kê đăng ký bao gồm tổng số đăng ký, đăng ký mới, phân bố theo khóa học
    */
-  @Get('stats')
+  @Get('/get/stats')
   async getEnrollmentStats() {
     this.logger.log('Getting enrollment statistics');
     return this.enrollmentService.getEnrollmentStats();

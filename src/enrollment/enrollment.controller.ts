@@ -65,6 +65,58 @@ export class EnrollmentController {
   }
 
   /**
+   * Lấy thống kê về đăng ký khóa học
+   * 
+   * @returns Thông tin thống kê đăng ký bao gồm tổng số đăng ký, đăng ký mới, phân bố theo khóa học
+   */
+  @Get('stats')
+  async getEnrollmentStats() {
+    this.logger.log('Getting enrollment statistics');
+    return this.enrollmentService.getEnrollmentStats();
+  }
+
+  /**
+   * Lấy toàn bộ chứng chỉ từ database
+   * 
+   * @returns Danh sách tất cả các chứng chỉ
+   */
+  @Get('all-certificates')
+  async getAllCertificatesSimple() {
+    this.logger.log('Getting all certificates without filtering');
+    return this.enrollmentService.getAllCertificatesSimple();
+  }
+
+  /**
+   * Lấy danh sách tất cả các chứng chỉ trong hệ thống
+   * 
+   * @param courseId - ID khóa học để lọc (tùy chọn)
+   * @param fromDate - Ngày bắt đầu để lọc (tùy chọn)
+   * @param toDate - Ngày kết thúc để lọc (tùy chọn)
+   * @param page - Số trang (mặc định: 1)
+   * @param limit - Số lượng kết quả trên mỗi trang (mặc định: 10)
+   * @param userId - ID của người dùng thực hiện request (từ header)
+   * @returns Danh sách các chứng chỉ thỏa mãn điều kiện lọc
+   */
+  @Get('certificates')
+  async getAllCertificates(
+    @Query('courseId') courseId?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Headers('X-User-Id') userId?: string,
+  ) {
+    this.logger.log(`Getting all certificates with filters: courseId=${courseId}, fromDate=${fromDate}, toDate=${toDate}, page=${page}, limit=${limit}`);
+    
+    // Chuyển đổi chuỗi ngày thành đối tượng Date nếu có
+    const filters: any = { courseId };
+    if (fromDate) filters.fromDate = new Date(fromDate);
+    if (toDate) filters.toDate = new Date(toDate);
+    
+    return this.enrollmentService.getAllCertificates(filters, page, limit);
+  }
+
+  /**
    * Lấy danh sách tất cả các enrollment với bộ lọc tùy chọn
    * 
    * @param userId - ID của người dùng (từ header)
@@ -287,57 +339,5 @@ export class EnrollmentController {
   ) {
     this.logger.log(`Updating certificate ${certificateId}`);
     return this.enrollmentService.updateCertificate(certificateId, certificateData);
-  }
-
-  /**
-   * Lấy thống kê về đăng ký khóa học
-   * 
-   * @returns Thông tin thống kê đăng ký bao gồm tổng số đăng ký, đăng ký mới, phân bố theo khóa học
-   */
-  @Get('stats')
-  async getEnrollmentStats() {
-    this.logger.log('Getting enrollment statistics');
-    return this.enrollmentService.getEnrollmentStats();
-  }
-
-  /**
-   * Lấy danh sách tất cả các chứng chỉ trong hệ thống
-   * 
-   * @param courseId - ID khóa học để lọc (tùy chọn)
-   * @param fromDate - Ngày bắt đầu để lọc (tùy chọn)
-   * @param toDate - Ngày kết thúc để lọc (tùy chọn)
-   * @param page - Số trang (mặc định: 1)
-   * @param limit - Số lượng kết quả trên mỗi trang (mặc định: 10)
-   * @param userId - ID của người dùng thực hiện request (từ header)
-   * @returns Danh sách các chứng chỉ thỏa mãn điều kiện lọc
-   */
-  @Get('certificates')
-  async getAllCertificates(
-    @Query('courseId') courseId?: string,
-    @Query('fromDate') fromDate?: string,
-    @Query('toDate') toDate?: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
-    @Headers('X-User-Id') userId?: string,
-  ) {
-    this.logger.log(`Getting all certificates with filters: courseId=${courseId}, fromDate=${fromDate}, toDate=${toDate}, page=${page}, limit=${limit}`);
-    
-    // Chuyển đổi chuỗi ngày thành đối tượng Date nếu có
-    const filters: any = { courseId };
-    if (fromDate) filters.fromDate = new Date(fromDate);
-    if (toDate) filters.toDate = new Date(toDate);
-    
-    return this.enrollmentService.getAllCertificates(filters, page, limit);
-  }
-
-  /**
-   * Lấy toàn bộ chứng chỉ từ database
-   * 
-   * @returns Danh sách tất cả các chứng chỉ
-   */
-  @Get('all-certificates')
-  async getAllCertificatesSimple() {
-    this.logger.log('Getting all certificates without filtering');
-    return this.enrollmentService.getAllCertificatesSimple();
   }
 }

@@ -69,7 +69,7 @@ export class EnrollmentController {
    * 
    * @returns Thông tin thống kê đăng ký bao gồm tổng số đăng ký, đăng ký mới, phân bố theo khóa học
    */
-  @Get('/get/stats')
+  @Get('get/stats')
   async getEnrollmentStats() {
     this.logger.log('Getting enrollment statistics');
     return this.enrollmentService.getEnrollmentStats();
@@ -80,7 +80,7 @@ export class EnrollmentController {
    * 
    * @returns Danh sách tất cả các chứng chỉ
    */
-  @Get('all-certificates')
+  @Get('get/all-certificates')
   async getAllCertificatesSimple() {
     this.logger.log('Getting all certificates without filtering');
     return this.enrollmentService.getAllCertificatesSimple();
@@ -97,7 +97,7 @@ export class EnrollmentController {
    * @param userId - ID của người dùng thực hiện request (từ header)
    * @returns Danh sách các chứng chỉ thỏa mãn điều kiện lọc
    */
-  @Get('certificates')
+  @Get('certificates/get-all')
   async getAllCertificates(
     @Query('courseId') courseId?: string,
     @Query('fromDate') fromDate?: string,

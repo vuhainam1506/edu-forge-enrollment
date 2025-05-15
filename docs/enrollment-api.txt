@@ -380,6 +380,39 @@ hoặc
 **Status Codes:**
 - 200: Thành công
 
+### 10. Lấy Thống Kê Đăng Ký
+
+**Endpoint:** `GET /api/v1/enrollment/stats`
+
+**Path đầy đủ:** `http://localhost:3003/api/v1/enrollment/stats`
+
+**Mô tả:** Lấy thông tin thống kê về đăng ký khóa học.
+
+**Response:**
+```json
+{
+  "totalEnrollments": 1000,
+  "newEnrollmentsLast30Days": 300,
+  "enrollmentsByCourse": [
+    { "courseId": "COURSE-1", "enrollments": 200 },
+    { "courseId": "COURSE-2", "enrollments": 150 }
+  ],
+  "averageTimeToComplete": 45,
+  "averageCompletionRate": 0.65,
+  "dropoutRate": 0.15,
+  "popularCourses": [
+    { "courseId": "COURSE-1", "title": "Introduction to Programming", "enrollments": 200 },
+    { "courseId": "COURSE-2", "title": "Web Development Basics", "enrollments": 150 }
+  ]
+}
+```
+
+**Status Codes:**
+- 200: Thành công
+
+**Ghi chú:**
+- `dropoutRate`: Tỷ lệ học viên bỏ học, được tính bằng số học viên có trạng thái ACTIVE nhưng không có cập nhật tiến độ trong 30 ngày gần nhất chia cho tổng số học viên có trạng thái ACTIVE.
+
 ## Models
 
 ### Enrollment
@@ -490,3 +523,4 @@ GET /api/v1/check/USER-1/FREE-COURSE-1
   "enrolled": true
 }
 ```
+

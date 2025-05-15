@@ -286,4 +286,15 @@ export class EnrollmentController {
     this.logger.log(`Updating certificate ${certificateId}`);
     return this.enrollmentService.updateCertificate(certificateId, certificateData);
   }
+
+  /**
+   * Lấy thống kê về đăng ký khóa học
+   * 
+   * @returns Thông tin thống kê đăng ký bao gồm tổng số đăng ký, đăng ký mới, phân bố theo khóa học
+   */
+  @Get('stats')
+  async getEnrollmentStats() {
+    this.logger.log('Getting enrollment statistics');
+    return this.enrollmentService.getEnrollmentStats();
   }
+}

@@ -646,5 +646,140 @@ export class EnrollmentService {
       }
     });
   }
+
+  /**
+   * Lấy thống kê về đăng ký khóa học
+   * 
+   * @returns Thông tin thống kê đăng ký
+   */
+  async getEnrollmentStats() {
+    try {
+      // Lấy tổng số đăng ký
+      const totalEnrollments = await this.prisma.enrollment.count();
+      
+      // Lấy đăng ký trong 30 ngày qua
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const newEnrollmentsLast30Days = await this.prisma.enrollment.count({
+        where: {
+          createdAt: {
+            gte: thirtyDaysAgo
+          }
+        }
+      });
+      
+      // Lấy số đăng ký theo khóa học
+      const enrollmentsByCourse = await this.prisma.enrollment.groupBy({
+        by: ['courseId'],
+        _count: {
+          id: true
+        }
+      });
+      
+      // Chuyển đổi kết quả thành định dạng mong muốn
+      const formattedEnrollmentsByCourse = enrollmentsByCourse.map(item => ({
+        courseId: item.courseId,
+        enrollments: item._count.id
+      }));
+      
+      // Tính thời gian trung bình để hoàn thành khóa học
+      const completedEnrollments = await this.prisma.enrollment.findMany({
+        where: {
+          status: 'COMPLETED',
+          completedAt: {
+            not: null
+          },
+          createdAt: {
+            not: null
+          }
+        },
+        select: {
+          createdAt: true,
+          completedAt: true
+        }
+      });
+      
+      let averageTimeToComplete = 0;
+      if (completedEnrollments.length > 0) {
+        const totalDays = completedEnrollments.reduce((sum, enrollment) => {
+          const createdAt = new Date(enrollment.createdAt);
+          const completedAt = new Date(enrollment.completedAt);
+          const diffTime = Math.abs(completedAt.getTime() - createdAt.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return sum + diffDays;
+        }, 0);
+        
+        averageTimeToComplete = totalDays / completedEnrollments.length;
+      }
+      
+      // Tính tỷ lệ hoàn thành trung bình
+      const completedCount = await this.prisma.enrollment.count({
+        where: {
+          status: 'COMPLETED'
+        }
+      });
+      
+      const averageCompletionRate = totalEnrollments > 0 ? completedCount / totalEnrollments : 0;
+      
+      // Tính tỷ lệ bỏ học dựa trên UserProgress
+      const activeEnrollmentsWithProgress = await this.prisma.enrollment.findMany({
+        where: {
+          status: 'ACTIVE'
+        },
+        include: {
+          UserProgress: true
+        }
+      });
+
+      // Đếm số enrollment không có cập nhật tiến độ trong 30 ngày
+      const inactiveCount = activeEnrollmentsWithProgress.filter(enrollment => {
+        // Kiểm tra xem có UserProgress không
+        if (!enrollment.UserProgress) return true;
+        
+        // Kiểm tra thời gian cập nhật gần nhất
+        const lastUpdate = new Date(enrollment.UserProgress.updatedAt);
+        return lastUpdate < thirtyDaysAgo;
+      }).length;
+
+      // Tính tỷ lệ bỏ học
+      const dropoutRate = activeEnrollmentsWithProgress.length > 0 
+        ? inactiveCount / activeEnrollmentsWithProgress.length 
+        : 0;
+      
+      // Lấy các khóa học phổ biến nhất
+      const popularCourses = await this.prisma.enrollment.groupBy({
+        by: ['courseId', 'courseName'],
+        _count: {
+          id: true
+        },
+        orderBy: {
+          _count: {
+            id: 'desc'
+          }
+        },
+        take: 5
+      });
+      
+      const formattedPopularCourses = popularCourses.map(item => ({
+        courseId: item.courseId,
+        title: item.courseName,
+        enrollments: item._count.id
+      }));
+      
+      return {
+        totalEnrollments,
+        newEnrollmentsLast30Days,
+        enrollmentsByCourse: formattedEnrollmentsByCourse,
+        averageTimeToComplete,
+        averageCompletionRate,
+        dropoutRate,
+        popularCourses: formattedPopularCourses
+      };
+    } catch (error) {
+      this.logger.error('Error getting enrollment stats:', error);
+      throw new Error('Failed to get enrollment statistics');
+    }
+  }
 }
 

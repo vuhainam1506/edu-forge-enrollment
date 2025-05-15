@@ -650,49 +650,37 @@ export class EnrollmentService {
   /**
    * Lấy thống kê về đăng ký khóa học
    * 
-   * @returns Thông tin thống kê đăng ký
+   * @returns Thông tin thống kê về đăng ký khóa học
    */
   async getEnrollmentStats() {
     try {
       // Lấy tổng số đăng ký
       const totalEnrollments = await this.prisma.enrollment.count();
       
-      // Lấy đăng ký trong 30 ngày qua
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const newEnrollmentsLast30Days = await this.prisma.enrollment.count({
-        where: {
-          createdAt: {
-            gte: thirtyDaysAgo
-          }
-        }
+      // Lấy số đăng ký theo trạng thái
+      const enrollmentsByStatus = await this.prisma.enrollment.groupBy({
+        by: ['status'],
+        _count: {
+          id: true,
+        },
       });
       
       // Lấy số đăng ký theo khóa học
       const enrollmentsByCourse = await this.prisma.enrollment.groupBy({
-        by: ['courseId'],
+        by: ['courseId', 'courseName'],
         _count: {
-          id: true
-        }
+          id: true,
+        },
       });
       
-      // Chuyển đổi kết quả thành định dạng mong muốn
-      const formattedEnrollmentsByCourse = enrollmentsByCourse.map(item => ({
-        courseId: item.courseId,
-        enrollments: item._count.id
-      }));
-      
-      // Tính thời gian trung bình để hoàn thành khóa học
+      // Lấy danh sách các enrollment đã hoàn thành để tính thời gian trung bình
       const completedEnrollments = await this.prisma.enrollment.findMany({
         where: {
-          status: 'COMPLETED',
+          status: "COMPLETED",
           completedAt: {
             not: null
-          },
-          createdAt: {
-            not: null
           }
+          // Bỏ điều kiện createdAt không hợp lệ
         },
         select: {
           createdAt: true,
@@ -700,84 +688,53 @@ export class EnrollmentService {
         }
       });
       
-      let averageTimeToComplete = 0;
+      // Tính thời gian trung bình để hoàn thành khóa học (tính bằng ngày)
+      let averageCompletionTime = 0;
       if (completedEnrollments.length > 0) {
         const totalDays = completedEnrollments.reduce((sum, enrollment) => {
-          const createdAt = new Date(enrollment.createdAt);
-          const completedAt = new Date(enrollment.completedAt);
-          const diffTime = Math.abs(completedAt.getTime() - createdAt.getTime());
+          const createdDate = new Date(enrollment.createdAt);
+          const completedDate = new Date(enrollment.completedAt);
+          const diffTime = Math.abs(completedDate.getTime() - createdDate.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           return sum + diffDays;
         }, 0);
-        
-        averageTimeToComplete = totalDays / completedEnrollments.length;
+        averageCompletionTime = totalDays / completedEnrollments.length;
       }
       
-      // Tính tỷ lệ hoàn thành trung bình
-      const completedCount = await this.prisma.enrollment.count({
+      // Lấy số đăng ký trong 30 ngày gần đây
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const recentEnrollments = await this.prisma.enrollment.count({
         where: {
-          status: 'COMPLETED'
-        }
-      });
-      
-      const averageCompletionRate = totalEnrollments > 0 ? completedCount / totalEnrollments : 0;
-      
-      // Tính tỷ lệ bỏ học dựa trên UserProgress
-      const activeEnrollmentsWithProgress = await this.prisma.enrollment.findMany({
-        where: {
-          status: 'ACTIVE'
-        },
-        include: {
-          UserProgress: true
-        }
-      });
-
-      // Đếm số enrollment không có cập nhật tiến độ trong 30 ngày
-      const inactiveCount = activeEnrollmentsWithProgress.filter(enrollment => {
-        // Kiểm tra xem có UserProgress không
-        if (!enrollment.UserProgress) return true;
-        
-        // Kiểm tra thời gian cập nhật gần nhất
-        const lastUpdate = new Date(enrollment.UserProgress.updatedAt);
-        return lastUpdate < thirtyDaysAgo;
-      }).length;
-
-      // Tính tỷ lệ bỏ học
-      const dropoutRate = activeEnrollmentsWithProgress.length > 0 
-        ? inactiveCount / activeEnrollmentsWithProgress.length 
-        : 0;
-      
-      // Lấy các khóa học phổ biến nhất
-      const popularCourses = await this.prisma.enrollment.groupBy({
-        by: ['courseId', 'courseName'],
-        _count: {
-          id: true
-        },
-        orderBy: {
-          _count: {
-            id: 'desc'
+          createdAt: {
+            gte: thirtyDaysAgo
           }
-        },
-        take: 5
+        }
       });
       
-      const formattedPopularCourses = popularCourses.map(item => ({
+      // Định dạng kết quả trả về
+      const formattedEnrollmentsByStatus = enrollmentsByStatus.map(item => ({
+        status: item.status,
+        count: item._count.id
+      }));
+      
+      const formattedEnrollmentsByCourse = enrollmentsByCourse.map(item => ({
         courseId: item.courseId,
-        title: item.courseName,
+        courseName: item.courseName || 'Unknown Course',
         enrollments: item._count.id
       }));
       
       return {
-        totalEnrollments,
-        newEnrollmentsLast30Days,
-        enrollmentsByCourse: formattedEnrollmentsByCourse,
-        averageTimeToComplete,
-        averageCompletionRate,
-        dropoutRate,
-        popularCourses: formattedPopularCourses
+        total: totalEnrollments,
+        byStatus: formattedEnrollmentsByStatus,
+        byCourse: formattedEnrollmentsByCourse,
+        recentEnrollments,
+        averageCompletionTime: Math.round(averageCompletionTime * 10) / 10 // Làm tròn 1 chữ số thập phân
       };
     } catch (error) {
-      this.logger.error('Error getting enrollment stats:', error);
+      this.logger.error(`Error getting enrollment stats: ${error.message}`);
+      this.logger.error(`Error getting enrollment stats:`, error);
       throw new Error('Failed to get enrollment statistics');
     }
   }

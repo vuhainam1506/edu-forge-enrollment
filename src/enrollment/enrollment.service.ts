@@ -680,7 +680,6 @@ export class EnrollmentService {
           completedAt: {
             not: null
           }
-          // Bỏ điều kiện createdAt không hợp lệ
         },
         select: {
           createdAt: true,
@@ -689,7 +688,7 @@ export class EnrollmentService {
       });
       
       // Tính thời gian trung bình để hoàn thành khóa học (tính bằng ngày)
-      let averageCompletionTime = 0;
+      let averageTimeToComplete = 0;
       if (completedEnrollments.length > 0) {
         const totalDays = completedEnrollments.reduce((sum, enrollment) => {
           const createdDate = new Date(enrollment.createdAt);
@@ -698,14 +697,14 @@ export class EnrollmentService {
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           return sum + diffDays;
         }, 0);
-        averageCompletionTime = totalDays / completedEnrollments.length;
+        averageTimeToComplete = totalDays / completedEnrollments.length;
       }
       
       // Lấy số đăng ký trong 30 ngày gần đây
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const recentEnrollments = await this.prisma.enrollment.count({
+      const newEnrollmentsLast30Days = await this.prisma.enrollment.count({
         where: {
           createdAt: {
             gte: thirtyDaysAgo
@@ -713,24 +712,52 @@ export class EnrollmentService {
         }
       });
       
-      // Định dạng kết quả trả về
-      const formattedEnrollmentsByStatus = enrollmentsByStatus.map(item => ({
-        status: item.status,
-        count: item._count.id
-      }));
+      // Tính tỷ lệ bỏ học (học viên có trạng thái ACTIVE nhưng không có cập nhật trong 30 ngày)
+      const activeEnrollments = await this.prisma.enrollment.count({
+        where: {
+          status: "ACTIVE"
+        }
+      });
       
+      const inactiveEnrollments = await this.prisma.enrollment.count({
+        where: {
+          status: "ACTIVE",
+          updatedAt: {
+            lt: thirtyDaysAgo
+          }
+        }
+      });
+      
+      const dropoutRate = activeEnrollments > 0 ? inactiveEnrollments / activeEnrollments : 0;
+      
+      // Tính tỷ lệ hoàn thành trung bình
+      const completedCount = enrollmentsByStatus.find(item => item.status === "COMPLETED")?._count?.id || 0;
+      const averageCompletionRate = totalEnrollments > 0 ? completedCount / totalEnrollments : 0;
+      
+      // Định dạng enrollmentsByCourse theo yêu cầu
       const formattedEnrollmentsByCourse = enrollmentsByCourse.map(item => ({
         courseId: item.courseId,
-        courseName: item.courseName || 'Unknown Course',
         enrollments: item._count.id
       }));
       
+      // Lấy danh sách khóa học phổ biến nhất
+      const popularCourses = enrollmentsByCourse
+        .map(item => ({
+          courseId: item.courseId,
+          title: item.courseName || 'Unknown Course',
+          enrollments: item._count.id
+        }))
+        .sort((a, b) => b.enrollments - a.enrollments)
+        .slice(0, 5); // Lấy 5 khóa học phổ biến nhất
+      
       return {
-        total: totalEnrollments,
-        byStatus: formattedEnrollmentsByStatus,
-        byCourse: formattedEnrollmentsByCourse,
-        recentEnrollments,
-        averageCompletionTime: Math.round(averageCompletionTime * 10) / 10 // Làm tròn 1 chữ số thập phân
+        totalEnrollments,
+        newEnrollmentsLast30Days,
+        dropoutRate: Math.round(dropoutRate * 100) / 100,
+        enrollmentsByCourse: formattedEnrollmentsByCourse,
+        averageTimeToComplete: Math.round(averageTimeToComplete * 10) / 10,
+        averageCompletionRate: Math.round(averageCompletionRate * 100) / 100,
+        popularCourses
       };
     } catch (error) {
       this.logger.error(`Error getting enrollment stats: ${error.message}`);

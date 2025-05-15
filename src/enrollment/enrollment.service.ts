@@ -781,5 +781,82 @@ export class EnrollmentService {
       throw new Error('Failed to get enrollment statistics');
     }
   }
+
+  /**
+   * Lấy danh sách tất cả các chứng chỉ trong hệ thống
+   * 
+   * @param filters - Bộ lọc tùy chọn (courseId, từ ngày, đến ngày)
+   * @param page - Số trang
+   * @param limit - Số lượng kết quả trên mỗi trang
+   * @returns Danh sách các chứng chỉ thỏa mãn điều kiện lọc
+   */
+  async getAllCertificates(
+    filters?: {
+      courseId?: string;
+      fromDate?: Date;
+      toDate?: Date;
+    },
+    page: number = 1,
+    limit: number = 10
+  ) {
+    const where: any = {};
+    
+    // Áp dụng bộ lọc nếu có
+    if (filters?.courseId) {
+      where.Enrollment = {
+        courseId: filters.courseId
+      };
+    }
+    
+    // Lọc theo khoảng thời gian
+    if (filters?.fromDate || filters?.toDate) {
+      where.issuedAt = {};
+      if (filters?.fromDate) where.issuedAt.gte = filters.fromDate;
+      if (filters?.toDate) where.issuedAt.lte = filters.toDate;
+    }
+
+    // Tính toán skip cho phân trang
+    const skip = (page - 1) * limit;
+    
+    // Lấy tổng số chứng chỉ thỏa mãn điều kiện
+    const total = await this.prisma.certificate.count({ where });
+    
+    // Lấy danh sách chứng chỉ với phân trang
+    const certificates = await this.prisma.certificate.findMany({
+      where,
+      include: {
+        Enrollment: true
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        issuedAt: 'desc'
+      }
+    });
+
+    // Định dạng lại dữ liệu trả về
+    const formattedCertificates = certificates.map(cert => ({
+      id: cert.id,
+      enrollmentId: cert.enrollmentId,
+      userId: cert.Enrollment.userId,
+      userName: cert.Enrollment.userName,
+      courseId: cert.Enrollment.courseId,
+      courseName: cert.Enrollment.courseName,
+      metadata: cert.metadata,
+      issuedAt: cert.issuedAt,
+      updatedAt: cert.updatedAt
+    }));
+
+    // Trả về kết quả với metadata phân trang
+    return {
+      data: formattedCertificates,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
 }
 

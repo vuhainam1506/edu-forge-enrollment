@@ -16,7 +16,9 @@ import {
   Logger,
   HttpCode,
   HttpStatus,
-  Headers
+  Headers,
+  DefaultValuePipe,
+  ParseIntPipe
 } from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
 import { EnrollmentStatus } from '@prisma/client';
@@ -296,5 +298,35 @@ export class EnrollmentController {
   async getEnrollmentStats() {
     this.logger.log('Getting enrollment statistics');
     return this.enrollmentService.getEnrollmentStats();
+  }
+
+  /**
+   * Lấy danh sách tất cả các chứng chỉ trong hệ thống
+   * 
+   * @param courseId - ID khóa học để lọc (tùy chọn)
+   * @param fromDate - Ngày bắt đầu để lọc (tùy chọn)
+   * @param toDate - Ngày kết thúc để lọc (tùy chọn)
+   * @param page - Số trang (mặc định: 1)
+   * @param limit - Số lượng kết quả trên mỗi trang (mặc định: 10)
+   * @param userId - ID của người dùng thực hiện request (từ header)
+   * @returns Danh sách các chứng chỉ thỏa mãn điều kiện lọc
+   */
+  @Get('certificates')
+  async getAllCertificates(
+    @Query('courseId') courseId?: string,
+    @Query('fromDate') fromDate?: string,
+    @Query('toDate') toDate?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number = 10,
+    @Headers('X-User-Id') userId?: string,
+  ) {
+    this.logger.log(`Getting all certificates with filters: courseId=${courseId}, fromDate=${fromDate}, toDate=${toDate}, page=${page}, limit=${limit}`);
+    
+    // Chuyển đổi chuỗi ngày thành đối tượng Date nếu có
+    const filters: any = { courseId };
+    if (fromDate) filters.fromDate = new Date(fromDate);
+    if (toDate) filters.toDate = new Date(toDate);
+    
+    return this.enrollmentService.getAllCertificates(filters, page, limit);
   }
 }

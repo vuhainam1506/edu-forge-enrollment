@@ -1,0 +1,28 @@
+{
+  "name": "Create Certificate for Completed Enrollment",
+  "request": {
+    "method": "POST",
+    "header": [
+      {
+        "key": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "key": "X-User-Id",
+        "value": "680342fe32367c789ca11c81"
+      }
+    ],
+    "url": {
+      "raw": "https://enrollment.eduforge.io.vn/api/v1/enrollment/c3026dad-cca8-44e0-b08c-6d2af40d9c29/certificate",
+      "protocol": "https",
+      "host": ["enrollment", "eduforge", "io", "vn"],
+      "path": ["api", "v1", "enrollment", "c3026dad-cca8-44e0-b08c-6d2af40d9c29", "certificate"]
+    },
+    "body": {
+      "mode": "raw",
+      "raw": "{\n    \"metadata\": {\n        \"issueDate\": \"2025-05-15\",\n        \"grade\": \"Xuất sắc\",\n        \"instructorName\": \"Nguyễn Văn Giảng\",\n        \"instructorTitle\": \"Senior JavaScript Developer\",\n        \"courseCompletionDate\": \"2025-05-14\",\n        \"certificateNumber\": \"JS-20250515-001\",\n        \"studentName\": \"Tran Dinh Kien\",\n        \"courseName\": \"Lập trình JavaScript căn bản\",\n        \"courseId\": \"353df7ee-27df-4082-b37f-aed42fc4a237\",\n        \"totalHours\": 40,\n        \"skills\": [\n            \"JavaScript Fundamentals\",\n            \"DOM Manipulation\",\n            \"Event Handling\",\n            \"Debugging\"\n        ]\n    }\n}"
+    },
+    "description": "Tạo chứng chỉ cho enrollment đã hoàn thành khóa học JavaScript"
+  },
+  "response": []
+}

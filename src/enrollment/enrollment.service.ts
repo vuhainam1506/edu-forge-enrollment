@@ -858,5 +858,33 @@ export class EnrollmentService {
       }
     };
   }
+
+  /**
+   * Lấy toàn bộ chứng chỉ từ database
+   * 
+   * @returns Danh sách tất cả các chứng chỉ
+   */
+  async getAllCertificatesSimple() {
+    const certificates = await this.prisma.certificate.findMany({
+      include: {
+        Enrollment: true
+      },
+      orderBy: {
+        issuedAt: 'desc'
+      }
+    });
+
+    return certificates.map(cert => ({
+      id: cert.id,
+      enrollmentId: cert.enrollmentId,
+      userId: cert.Enrollment.userId,
+      userName: cert.Enrollment.userName,
+      courseId: cert.Enrollment.courseId,
+      courseName: cert.Enrollment.courseName,
+      metadata: cert.metadata,
+      issuedAt: cert.issuedAt,
+      updatedAt: cert.updatedAt
+    }));
+  }
 }
 

@@ -329,4 +329,15 @@ export class EnrollmentController {
     
     return this.enrollmentService.getAllCertificates(filters, page, limit);
   }
+
+  /**
+   * Lấy toàn bộ chứng chỉ từ database
+   * 
+   * @returns Danh sách tất cả các chứng chỉ
+   */
+  @Get('all-certificates')
+  async getAllCertificatesSimple() {
+    this.logger.log('Getting all certificates without filtering');
+    return this.enrollmentService.getAllCertificatesSimple();
+  }
 }

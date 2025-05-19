@@ -750,6 +750,38 @@ export class EnrollmentService {
         .sort((a, b) => b.enrollments - a.enrollments)
         .slice(0, 5); // Lấy 5 khóa học phổ biến nhất
       
+      // Thêm tính toán đăng ký theo tháng
+      const currentDate = new Date();
+      const monthlyEnrollments = [];
+      
+      // Tạo dữ liệu cho 5 tháng gần nhất
+      for (let i = 4; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(currentDate.getMonth() - i);
+        
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const monthFormatted = `${year}-${month.toString().padStart(2, '0')}`;
+        
+        // Tính số lượng đăng ký cho tháng này
+        const startOfMonth = new Date(year, month - 1, 1);
+        const endOfMonth = new Date(year, month, 0);
+        
+        const enrollmentCount = await this.prisma.enrollment.count({
+          where: {
+            createdAt: {
+              gte: startOfMonth,
+              lte: endOfMonth,
+            },
+          },
+        });
+        
+        monthlyEnrollments.push({
+          month: monthFormatted,
+          total: enrollmentCount || 0
+        });
+      }
+      
       return {
         totalEnrollments,
         newEnrollmentsLast30Days,
@@ -757,11 +789,11 @@ export class EnrollmentService {
         enrollmentsByCourse: formattedEnrollmentsByCourse,
         averageTimeToComplete: Math.round(averageTimeToComplete * 10) / 10,
         averageCompletionRate: Math.round(averageCompletionRate * 100) / 100,
-        popularCourses
+        popularCourses,
+        monthlyEnrollments
       };
     } catch (error) {
-      this.logger.error(`Error getting enrollment stats: ${error.message}`);
-      this.logger.error(`Error getting enrollment stats:`, error);
+      this.logger.error(`Error getting enrollment statistics: ${error.message}`);
       throw new Error('Failed to get enrollment statistics');
     }
   }
